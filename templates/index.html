@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Voice Assistant</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        .hidden { display: none; }
+        .status-message { color: gray; }
+        .spinner-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .processing-text {
+            margin-left: 10px;
+            color: #0d6efd;
+        }
+        .list-item {
+            margin-bottom: 0.5rem;
+        }
+        .section-content {
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <h1 class="text-center mb-5 text-primary">Medical Notes Assistant</h1>
+                
+                <!-- Model Selection Panel -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="transcriber" class="form-label">Select Transcriber:</label>
+                        <select id="transcriber" class="form-select">
+                            <option value="whisperx" selected>WhisperX</option>
+                            <option value="google">Google Speech API</option>
+                            <option value="whisper">Openai Whisper</option>
+                        </select>
+                    </div>
+                
+                    <div class="col-md-6">
+                        <label for="processing" class="form-label">Select Processing Model:</label>
+                        <select id="processing" class="form-select">
+                            <option value="gemini">Gemini</option>
+                            <option value="local">Local LLM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Local Model Selection -->
+                <div class="row mb-4" id="localModelSelection" style="display: none;">
+                    <div class="col-md-12">
+                        <label for="local_model" class="form-label">Select Local Model:</label>
+                        <select id="local_model" class="form-select">
+                            <option value="SmallThinker">SmallThinker</option>
+                            <option value="Dolphin">Dolphin</option>
+                            <option value="Falcon">Falcon</option>
+                            <option value="Qwen">Qwen</option>
+                            <option value="Llama-8B">Llama-8B</option>
+                            <option value="Llama" selected>Llama</option>
+                            <option value="phi-4">Phi-4-4bit</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Input Methods -->
+                <div class="row">
+                    <div class="col-md-6 text-center mb-5">
+                        <button id="startRecording" class="btn btn-primary">
+                            <i class="bi bi-mic-fill"></i> Start Recording
+                        </button>
+                        <p id="recordingStatus" class="mt-2 hidden">Recording in progress...</p>
+                    </div>
+                    
+                    <div class="col-md-6 text-center mb-5">
+                        <form id="audioUploadForm">
+                            <div class="mb-3">
+                                <input type="file" class="form-control" id="audioFile" accept=".wav,.mp3" required>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-upload"></i> Upload and Process
+                            </button>
+                        </form>
+                        <div id="conversionStatus" class="hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Error and Results -->
+                <div id="errorMessage" class="alert alert-danger hidden" role="alert"></div>
+                <div id="results" class="hidden">
+                    <div id="session overview"></div>
+                    <div id="client concerns"></div>
+                    <div id="goals and progress"></div>
+                    <div id="therapeutic interventions"></div>
+                    <div id="clients response"></div>
+                    <div id="challenges"></div>
+                    <div id="homework plan"></div>
+                    <div id="next session prompts"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// Utility Classes
+class ErrorHandler {
+    static show(message, type = 'error') {
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.className = `alert alert-${type === 'error' ? 'danger' : 'warning'}`;
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('hidden');
+    }
+
+    static clear() {
+        document.getElementById('errorMessage').classList.add('hidden');
+    }
+}
+
+class ProcessingStateManager {
+    static setProcessing(isProcessing) {
+        const elements = {
+            submitButton: document.querySelector('#audioUploadForm button[type="submit"]'),
+            status: document.getElementById('conversionStatus'),
+            processingModel: document.getElementById('processing').value
+        };
+
+        elements.submitButton.disabled = isProcessing;
+        elements.status.classList.toggle('hidden', !isProcessing);
+        
+        if (isProcessing) {
+            elements.status.innerHTML = `
+                <div class="spinner-container">
+                    <div class="spinner-border text-primary"></div>
+                    <span class="processing-text">Processing with ${elements.processingModel}...</span>
+                </div>`;
+        }
+    }
+}
+
+class AudioProcessor {
+    static getFormData() {
+        const formData = new FormData();
+        const audioFile = document.getElementById('audioFile').files[0];
+        const transcriber = document.getElementById('transcriber').value;
+        const processing = document.getElementById('processing').value;
+
+        if (!audioFile) {
+            throw new Error('No audio file selected');
+        }
+
+        formData.append('audio', audioFile);
+        formData.append('transcriber', transcriber);
+        formData.append('processing', processing);
+
+        if (processing === 'local') {
+            formData.append('local_model', document.getElementById('local_model').value);
+        }
+
+        return formData;
+    }
+}
+
+// Formatting Functions
+function capitalizeFirstLetter(string) {
+    if (typeof string !== 'string') return '';
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function formatLabel(key) {
+    return capitalizeFirstLetter(key.replace(/_/g, ' '));
+}
+
+function formatValue(value) {
+    if (value === null || value === undefined) {
+        return '<span class="status-message">Not provided</span>';
+    }
+    
+    if (typeof value === 'number') {
+        return `<span class="number">${value}</span>`;
+    }
+    
+    const formattedText = value.toString()
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/(\d+)/g, '<span class="number">$1</span>');
+        
+    return formattedText;
+}
+
+function formatData(data) {
+    if (!data) return '<p class="status-message">Information not available</p>';
+    
+    if (Array.isArray(data)) {
+        return `<ul class="list-unstyled">
+            ${data.map(item => `<li class="list-item">• ${formatValue(item)}</li>`).join('')}
+        </ul>`;
+    }
+    
+    if (typeof data === 'object') {
+        return Object.entries(data).map(([key, value]) => {
+            const formattedKey = formatLabel(key);
+            const formattedValue = Array.isArray(value) ? 
+                formatData(value) : 
+                formatValue(value);
+            
+            return `<div class="section-content">
+                <h4>${formattedKey}</h4>
+                ${formattedValue}
+            </div>`;
+        }).join('');
+    }
+    
+    return formatValue(data);
+}
+
+function displayResults(therapyNotes) {
+    const sections = [
+        'session_overview',
+        'client_concerns',
+        'goals_and_progress',
+        'therapeutic_interventions',
+        'clients_response',
+        'challenges',
+        'homework_plan',
+        'next_session_prompts'
+    ];
+
+    sections.forEach(section => {
+        const element = document.getElementById(section.replace(/_/g, ' '));
+        if (element && therapyNotes[section]) {
+            element.innerHTML = `
+                <h3>${formatLabel(section)}</h3>
+                ${formatData(therapyNotes[section])}
+            `;
+        }
+    });
+
+    document.getElementById('results').classList.remove('hidden');
+}
+
+// Download Function
+function downloadDocx(url) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'therapy_notes.docx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Model selection handling
+    document.getElementById('processing').addEventListener('change', (e) => {
+        document.getElementById('localModelSelection').style.display = 
+            e.target.value === 'local' ? 'block' : 'none';
+    });
+
+    // Audio upload form
+    document.getElementById('audioUploadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        ErrorHandler.clear();
+        
+        try {
+            ProcessingStateManager.setProcessing(true);
+            const formData = AudioProcessor.getFormData();
+            
+            const response = await fetch('/process_audio_file', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (!data.validated_therapy_notes) {
+                throw new Error('Invalid response format');
+            }
+
+            downloadDocx(data.docx_url);
+            displayResults(data.validated_therapy_notes);
+        } catch (error) {
+            ErrorHandler.show(error.message);
+        } finally {
+            ProcessingStateManager.setProcessing(false);
+        }
+    });
+
+    // Recording button
+    document.getElementById('startRecording').addEventListener('click', async () => {
+        const button = document.getElementById('startRecording');
+        const recordingStatus = document.getElementById('recordingStatus');
+        
+        try {
+            button.disabled = true;
+            button.innerHTML = '<i class="bi bi-mic-fill"></i> Recording...';
+            recordingStatus.classList.remove('hidden');
+            
+            const audioBlob = await recordAudio();
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.wav');
+            
+            ProcessingStateManager.setProcessing(true);
+            
+            const response = await fetch('/process_audio_file', {
+                method: 'POST',
+                body: AudioProcessor.getFormData()
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Error processing voice input.');
+            }
+
+            downloadDocx(data.docx_url);
+            displayResults(data.validated_therapy_notes);
+        } catch (error) {
+            ErrorHandler.show(error.message);
+        } finally {
+            button.disabled = false;
+            button.innerHTML = '<i class="bi bi-mic-fill"></i> Start Recording';
+            recordingStatus.classList.add('hidden');
+            ProcessingStateManager.setProcessing(false);
+        }
+    });
+});
+</script>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

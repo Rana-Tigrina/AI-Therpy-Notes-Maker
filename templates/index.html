@@ -1,344 +1,1648 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medical Voice Assistant</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>TherapyNotes AI - Session Audio to Clinical Documentation</title>
+    <!-- Google Fonts: warm editorial serif for display, precise sans for body, mono for data -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <!-- Bootstrap 5.3 CSS (layout/grid utilities only, visuals are overridden below) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
-        .hidden { display: none; }
-        .status-message { color: gray; }
-        .spinner-container {
+        /* =========================================================
+           TOKEN SYSTEM
+           A clinical-notebook identity: warm ink paper on dark,
+           one highlighter-gold accent for action, dusty sage for
+           verified/complete states, muted clay-red reserved only
+           for recording/alerts. Deliberately not the near-black +
+           acid-green or blue-violet defaults.
+        ========================================================= */
+        :root {
+            --bg-base: #15120e;
+            --bg-panel: #1d1912;
+            --bg-panel-raised: #241f17;
+            --rule: rgba(242, 237, 228, 0.09);
+            --rule-strong: rgba(242, 237, 228, 0.16);
+
+            --ink-amber: #d9a441;
+            --ink-amber-soft: rgba(217, 164, 65, 0.14);
+            --ink-sage: #86a68d;
+            --ink-sage-soft: rgba(134, 166, 141, 0.14);
+            --ink-clay: #c1584a;
+            --ink-clay-soft: rgba(193, 88, 74, 0.16);
+
+            --text-primary: #f3ece0;
+            --text-secondary: #b6ab97;
+            --text-muted: #8a806e;
+
+            --font-display: 'Fraunces', 'Georgia', serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Don't rely solely on Bootstrap's CDN-loaded .container for width/centering.
+           Defining it here too means the layout stays centered and capped even if
+           that stylesheet is slow, blocked, or fails to load. */
+        .container {
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+            width: 100%;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            background-image:
+                radial-gradient(ellipse 900px 500px at 12% -5%, rgba(217, 164, 65, 0.08), transparent 60%),
+                radial-gradient(ellipse 700px 500px at 100% 10%, rgba(134, 166, 141, 0.06), transparent 55%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            padding-bottom: 4rem;
+        }
+
+        h1,
+        h2,
+        h3,
+        .brand-font {
+            font-family: var(--font-display);
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        h4,
+        h5 {
+            font-family: var(--font-body);
+        }
+
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible {
+            outline: 2px solid var(--ink-amber);
+            outline-offset: 2px;
+        }
+
+        /* ---------- Eyebrow / mono labels (data & structure, not decoration) ---------- */
+        .eyebrow {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--ink-amber);
+        }
+
+        /* ---------- Panels (replaces frosted glassmorphism with a paper/chart panel) ---------- */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--rule);
+            border-radius: 0.6rem;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 14px 30px -18px rgba(0, 0, 0, 0.65);
+            transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .panel:hover {
+            border-color: var(--rule-strong);
+        }
+
+        /* ---------- Header ---------- */
+        .header-container {
+            position: relative;
+            padding: 3.5rem 0 2.5rem 0;
+            border-bottom: 1px solid var(--rule);
+            margin-bottom: 3rem;
+        }
+
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: linear-gradient(155deg, var(--ink-amber), #b9812b);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 10px;
+            color: #17130c;
+            font-size: 1.05rem;
+            flex-shrink: 0;
         }
-        .processing-text {
-            margin-left: 10px;
-            color: #0d6efd;
+
+        .brand-name {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            letter-spacing: 0.04em;
+            color: var(--text-secondary);
         }
-        .list-item {
+
+        .hero-title {
+            font-size: clamp(2.1rem, 4vw, 3rem);
+            font-weight: 600;
+            color: var(--text-primary);
+            max-width: 15ch;
+            line-height: 1.08;
+        }
+
+        .hero-sub {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 46ch;
+            margin-top: 1rem;
+            line-height: 1.6;
+        }
+
+        /* Signature element: a waveform that resolves into ruled note lines.
+           This is the literal thesis of the product: session audio in,
+           structured written notes out. */
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        @media (min-width: 992px) {
+            .hero-grid {
+                grid-template-columns: 1.15fr 0.85fr;
+            }
+        }
+
+        .hero-copy {
+            min-width: 0;
+        }
+
+        /* ---------- Hero preview: a mock of the generated note, fills the
+           space next to the hero copy with something the product actually
+           produces, instead of empty background ---------- */
+        .hero-preview {
+            display: flex;
+            justify-content: center;
+        }
+
+        .preview-card {
+            width: 100%;
+            max-width: 360px;
+            background: var(--bg-panel);
+            border: 1px solid var(--rule-strong);
+            border-radius: 0.65rem;
+            padding: 1.5rem;
+            transform: rotate(1.5deg);
+            box-shadow: 0 22px 44px -22px rgba(0, 0, 0, 0.7);
+        }
+
+        .preview-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .preview-check {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            letter-spacing: 0.04em;
+            color: var(--ink-sage);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            white-space: nowrap;
+        }
+
+        .preview-title {
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.9rem;
+        }
+
+        .preview-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 0.55rem;
+        }
+
+        .pline {
+            display: block;
+            height: 7px;
+            border-radius: 4px;
+            background: var(--rule-strong);
+        }
+
+        .pline.w-95 {
+            width: 95%;
+        }
+
+        .pline.w-90 {
+            width: 90%;
+        }
+
+        .pline.w-80 {
+            width: 80%;
+        }
+
+        .pline.w-70 {
+            width: 70%;
+        }
+
+        .pline.w-60 {
+            width: 60%;
+        }
+
+        .preview-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin: 1rem 0;
+        }
+
+        .preview-tag {
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            padding: 0.22rem 0.55rem;
+            border-radius: 0.3rem;
+            background: var(--ink-sage-soft);
+            color: var(--ink-sage);
+        }
+
+        .preview-divider {
+            border: none;
+            border-top: 1px solid var(--rule);
+            margin: 1rem 0;
+        }
+
+        .preview-footer {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            color: var(--text-muted);
+        }
+
+        .preview-footer i {
+            color: var(--ink-amber);
+        }
+
+        @media (max-width: 991px) {
+            .preview-card {
+                max-width: 320px;
+                transform: none;
+            }
+        }
+
+        .signature-graphic {
+            width: 100%;
+            height: auto;
+            margin-top: 2.25rem;
+            max-width: 540px;
+        }
+
+        .signature-bar {
+            fill: var(--ink-amber);
+            opacity: 0.85;
+        }
+
+        .signature-line {
+            stroke: var(--ink-sage);
+            stroke-width: 2;
+            stroke-linecap: round;
+            opacity: 0.55;
+        }
+
+        .signature-line.short {
+            opacity: 0.32;
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .signature-bar {
+                animation: settleBar 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+            }
+
+            .signature-line {
+                animation: drawLine 0.9s ease-out backwards;
+            }
+
+            @keyframes settleBar {
+                from {
+                    transform: scaleY(0.15);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: scaleY(1);
+                    opacity: 0.85;
+                }
+            }
+
+            @keyframes drawLine {
+                from {
+                    opacity: 0;
+                    transform: translateX(-8px);
+                }
+
+                to {
+                    opacity: 0.55;
+                    transform: translateX(0);
+                }
+            }
+        }
+
+        /* Engine status row */
+        .engine-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 1.75rem;
+        }
+
+        .engine-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.85rem;
+            border-radius: 0.4rem;
+            background: var(--bg-panel-raised);
+            border: 1px solid var(--rule);
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+
+        .engine-badge .badge-icon {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .engine-badge.whisper .badge-icon {
+            background: var(--ink-sage);
+            box-shadow: 0 0 6px var(--ink-sage);
+        }
+
+        .engine-badge.gemini .badge-icon {
+            background: var(--ink-amber);
+            box-shadow: 0 0 6px var(--ink-amber);
+        }
+
+        .engine-badge strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* ---------- Section headings ---------- */
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 1.4rem;
+            padding-bottom: 0.9rem;
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .section-title i {
+            color: var(--ink-amber);
+            font-size: 1rem;
+        }
+
+        .input-card {
+            padding: 1.75rem;
+        }
+
+        /* ---------- Dropzone ---------- */
+        .dropzone {
+            border: 1.5px dashed var(--rule-strong);
+            border-radius: 0.5rem;
+            padding: 2.25rem 1.5rem;
+            text-align: center;
+            background: var(--bg-panel-raised);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .dropzone:hover,
+        .dropzone.dragover {
+            border-color: var(--ink-amber);
+            background: var(--ink-amber-soft);
+        }
+
+        .dropzone-icon {
+            font-size: 2.25rem;
+            color: var(--ink-amber);
+            margin-bottom: 0.65rem;
+            display: block;
+        }
+
+        /* ---------- Buttons ---------- */
+        .btn-custom-primary {
+            background: var(--ink-amber);
+            color: #17130c;
+            font-weight: 600;
+            border: none;
+            padding: 0.7rem 1.6rem;
+            border-radius: 0.45rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-custom-primary:hover:not(:disabled) {
+            background: #e8b559;
+            color: #17130c;
+            transform: translateY(-1px);
+        }
+
+        .btn-custom-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Danger variant reuses the primary button structure for the Stop button,
+           tuned to the clay accent instead of amber */
+        .btn-custom-primary.bg-danger {
+            background: var(--ink-clay) !important;
+            border-color: var(--ink-clay) !important;
+            color: #f8ece9 !important;
+        }
+
+        .btn-custom-primary.bg-danger:hover {
+            background: #d16a5c !important;
+        }
+
+        .btn-custom-secondary {
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 500;
+            border: 1px solid var(--rule-strong);
+            padding: 0.7rem 1.4rem;
+            border-radius: 0.45rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-custom-secondary:hover {
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        .btn-danger-custom {
+            background: var(--ink-clay-soft);
+            border: 1px solid rgba(193, 88, 74, 0.4);
+            color: #e29289;
+            padding: 0.55rem 1.15rem;
+            border-radius: 0.45rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-danger-custom:hover {
+            background: rgba(193, 88, 74, 0.3);
+            color: #ffffff;
+        }
+
+        /* ---------- Live recorder ---------- */
+        .recorder-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.75rem 1.5rem;
+            background: var(--bg-panel-raised);
+            border: 1px solid var(--rule);
+            border-radius: 0.5rem;
+        }
+
+        .mic-pulse-ring {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--bg-panel);
+            border: 1.5px solid var(--ink-sage);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: var(--ink-sage);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .mic-pulse-ring.recording {
+            animation: pulseGlow 1.6s infinite;
+            background: var(--ink-clay-soft);
+            border-color: var(--ink-clay);
+            color: var(--ink-clay);
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(193, 88, 74, 0.45);
+            }
+
+            70% {
+                box-shadow: 0 0 0 16px rgba(193, 88, 74, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(193, 88, 74, 0);
+            }
+        }
+
+        .audio-wave-bars {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 32px;
+            margin: 1.1rem 0;
+        }
+
+        .wave-bar {
+            width: 3px;
+            height: 8px;
+            background: var(--ink-sage);
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+
+        .timer-display {
+            font-family: var(--font-mono);
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            letter-spacing: 0.04em;
+        }
+
+        /* ---------- Processing overlay ---------- */
+        .processing-modal {
+            padding: 2.25rem;
+            text-align: center;
+        }
+
+        .step-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-width: 440px;
+            margin: 1.5rem auto 0 auto;
+            text-align: left;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.8rem 1.1rem;
+            border-radius: 0.5rem;
+            background: transparent;
+            border: 1px solid var(--rule);
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .step-item.active {
+            background: var(--ink-amber-soft);
+            border-color: rgba(217, 164, 65, 0.4);
+            color: var(--text-primary);
+        }
+
+        .step-item.completed {
+            background: transparent;
+            border-color: var(--rule);
+            color: var(--ink-sage);
+        }
+
+        .step-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+            font-family: var(--font-mono);
+        }
+
+        .step-item.active .step-icon {
+            background: var(--ink-amber);
+            color: #17130c;
+        }
+
+        .step-item.completed .step-icon {
+            background: var(--ink-sage-soft);
+            color: var(--ink-sage);
+        }
+
+        .step-item.pending .step-icon {
+            background: var(--bg-panel-raised);
+            color: var(--text-muted);
+        }
+
+        /* ---------- Results ---------- */
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .note-card {
+            padding: 1.5rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            border-top: 2px solid var(--ink-amber);
+            border-radius: 0.4rem;
+        }
+
+        .note-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .note-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--rule);
+        }
+
+        .note-card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+            font-family: var(--font-body);
+        }
+
+        .note-card-title i {
+            color: var(--ink-amber);
+        }
+
+        .note-card-body {
+            font-size: 0.94rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            flex-grow: 1;
+        }
+
+        .note-card-body h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--ink-sage);
+            margin-top: 0.75rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .note-card-body ul {
+            padding-left: 1.2rem;
             margin-bottom: 0.5rem;
         }
-        .section-content {
-            margin-bottom: 2rem;
+
+        .note-card-body li {
+            margin-bottom: 0.35rem;
+        }
+
+        .note-card-body strong {
+            color: var(--text-primary);
+        }
+
+        .btn-copy-sm {
+            background: transparent;
+            border: 1px solid var(--rule-strong);
+            color: var(--text-secondary);
+            border-radius: 0.4rem;
+            padding: 0.25rem 0.6rem;
+            font-size: 0.78rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-copy-sm:hover {
+            color: var(--ink-amber);
+            border-color: var(--ink-amber);
+        }
+
+        /* ---------- Utility color classes referenced by existing JS (kept, retheme only) ---------- */
+        .text-emerald {
+            color: var(--ink-amber) !important;
+        }
+
+        .text-cyan {
+            color: var(--ink-sage) !important;
+        }
+
+        .alert-danger {
+            background: var(--ink-clay-soft) !important;
+            border-color: rgba(193, 88, 74, 0.4) !important;
+            color: #e8a89f !important;
+        }
+
+        .badge.bg-success {
+            background: var(--ink-sage-soft) !important;
+        }
+
+        .text-success {
+            color: var(--ink-sage) !important;
+        }
+
+        .border-success {
+            border-color: rgba(134, 166, 141, 0.4) !important;
+        }
+
+        .text-danger {
+            color: #e29289 !important;
+        }
+
+        .spinner-border.text-emerald {
+            color: var(--ink-amber) !important;
+        }
+
+        /* ---------- Toasts ---------- */
+        .toast-container-custom {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1080;
+        }
+
+        .custom-toast {
+            background: var(--bg-panel-raised);
+            border: 1px solid var(--ink-amber);
+            color: var(--text-primary);
+            padding: 0.85rem 1.3rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideUp 0.3s ease forwards;
+            font-size: 0.9rem;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .fade-in-up,
+            .mic-pulse-ring.recording,
+            .custom-toast {
+                animation: none !important;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="container my-5">
-        <div class="row justify-content-center">
-            <div class="col-md-10">
-                <h1 class="text-center mb-5 text-primary">Medical Notes Assistant</h1>
-                
-                <!-- Model Selection Panel -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <label for="transcriber" class="form-label">Select Transcriber:</label>
-                        <select id="transcriber" class="form-select">
-                            <option value="whisperx" selected>WhisperX</option>
-                            <option value="google">Google Speech API</option>
-                            <option value="whisper">Openai Whisper</option>
-                        </select>
+
+    <!-- Header Section -->
+    <header class="header-container">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-copy">
+                    <div class="brand-row">
+                        <div class="brand-mark"><i class="bi bi-journal-text"></i></div>
+                        <span class="brand-name">THERAPYNOTES&nbsp;AI</span>
                     </div>
-                
-                    <div class="col-md-6">
-                        <label for="processing" class="form-label">Select Processing Model:</label>
-                        <select id="processing" class="form-select">
-                            <option value="gemini">Gemini</option>
-                            <option value="local">Local LLM</option>
-                        </select>
+
+                    <span class="eyebrow">Clinical documentation, generated from the session itself</span>
+                    <h1 class="hero-title mt-2">From session audio to a finished clinical note.</h1>
+                    <p class="hero-sub">Upload or record a session. TherapyNotes AI transcribes it, checks its own
+                        output against the transcript, and hands back a structured, audit-ready document.</p>
+
+                    <!-- Signature graphic: waveform resolving into ruled note lines -->
+                    <svg class="signature-graphic" viewBox="0 0 620 90" xmlns="http://www.w3.org/2000/svg" role="img"
+                        aria-label="Audio waveform resolving into ruled note lines">
+                        <g>
+                            <rect class="signature-bar" x="0" y="38" width="5" height="14" rx="2"
+                                style="animation-delay:0.02s; transform-origin:0px 45px" />
+                            <rect class="signature-bar" x="10" y="28" width="5" height="34" rx="2"
+                                style="animation-delay:0.05s; transform-origin:12.5px 45px" />
+                            <rect class="signature-bar" x="20" y="18" width="5" height="54" rx="2"
+                                style="animation-delay:0.08s; transform-origin:22.5px 45px" />
+                            <rect class="signature-bar" x="30" y="30" width="5" height="30" rx="2"
+                                style="animation-delay:0.11s; transform-origin:32.5px 45px" />
+                            <rect class="signature-bar" x="40" y="10" width="5" height="70" rx="2"
+                                style="animation-delay:0.14s; transform-origin:42.5px 45px" />
+                            <rect class="signature-bar" x="50" y="24" width="5" height="42" rx="2"
+                                style="animation-delay:0.17s; transform-origin:52.5px 45px" />
+                            <rect class="signature-bar" x="60" y="34" width="5" height="22" rx="2"
+                                style="animation-delay:0.2s; transform-origin:62.5px 45px" />
+                            <rect class="signature-bar" x="70" y="16" width="5" height="58" rx="2"
+                                style="animation-delay:0.23s; transform-origin:72.5px 45px" />
+                            <rect class="signature-bar" x="80" y="32" width="5" height="26" rx="2"
+                                style="animation-delay:0.26s; transform-origin:82.5px 45px" />
+                            <rect class="signature-bar" x="90" y="22" width="5" height="46" rx="2"
+                                style="animation-delay:0.29s; transform-origin:92.5px 45px" />
+                            <rect class="signature-bar" x="100" y="36" width="5" height="18" rx="2"
+                                style="animation-delay:0.32s; transform-origin:102.5px 45px" />
+                            <rect class="signature-bar" x="110" y="40" width="5" height="10" rx="2"
+                                style="animation-delay:0.35s; transform-origin:112.5px 45px" />
+                        </g>
+                        <g>
+                            <line class="signature-line" x1="150" y1="20" x2="600" y2="20"
+                                style="animation-delay:0.4s" />
+                            <line class="signature-line" x1="150" y1="35" x2="600" y2="35"
+                                style="animation-delay:0.46s" />
+                            <line class="signature-line short" x1="150" y1="50" x2="480" y2="50"
+                                style="animation-delay:0.52s" />
+                            <line class="signature-line" x1="150" y1="65" x2="600" y2="65"
+                                style="animation-delay:0.58s" />
+                            <line class="signature-line short" x1="150" y1="80" x2="410" y2="80"
+                                style="animation-delay:0.64s" />
+                        </g>
+                    </svg>
+
+                    <div class="engine-row">
+                        <div class="engine-badge whisper">
+                            <span class="badge-icon"></span>
+                            <span>Transcription: <strong>Crisper-Whisper Turbo</strong></span>
+                        </div>
+                        <div class="engine-badge gemini">
+                            <span class="badge-icon"></span>
+                            <span>Note synthesis: <strong>Google Gemini</strong></span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Local Model Selection -->
-                <div class="row mb-4" id="localModelSelection" style="display: none;">
-                    <div class="col-md-12">
-                        <label for="local_model" class="form-label">Select Local Model:</label>
-                        <select id="local_model" class="form-select">
-                            <option value="SmallThinker">SmallThinker</option>
-                            <option value="Dolphin">Dolphin</option>
-                            <option value="Falcon">Falcon</option>
-                            <option value="Qwen">Qwen</option>
-                            <option value="Llama-8B">Llama-8B</option>
-                            <option value="Llama" selected>Llama</option>
-                            <option value="phi-4">Phi-4-4bit</option>
-                        </select>
+                <div class="hero-preview">
+                    <div class="preview-card">
+                        <div class="preview-card-head">
+                            <span class="eyebrow" style="font-size: 0.66rem; color: var(--ink-sage);">Generated &middot;
+                                Session 04</span>
+                            <span class="preview-check"><i class="bi bi-shield-check"></i>Validated</span>
+                        </div>
+                        <h5 class="preview-title">Session Overview</h5>
+                        <div class="preview-lines">
+                            <span class="pline w-95"></span>
+                            <span class="pline w-90"></span>
+                            <span class="pline w-70"></span>
+                        </div>
+                        <div class="preview-tags">
+                            <span class="preview-tag">CBT</span>
+                            <span class="preview-tag">Motivational Interviewing</span>
+                        </div>
+                        <div class="preview-lines">
+                            <span class="pline w-80"></span>
+                            <span class="pline w-60"></span>
+                        </div>
+                        <hr class="preview-divider">
+                        <div class="preview-footer">
+                            <i class="bi bi-file-earmark-word"></i>
+                            <span>therapy_notes_session04.docx</span>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Input Methods -->
-                <div class="row">
-                    <div class="col-md-6 text-center mb-5">
-                        <button id="startRecording" class="btn btn-primary">
-                            <i class="bi bi-mic-fill"></i> Start Recording
-                        </button>
-                        <p id="recordingStatus" class="mt-2 hidden">Recording in progress...</p>
-                    </div>
-                    
-                    <div class="col-md-6 text-center mb-5">
-                        <form id="audioUploadForm">
-                            <div class="mb-3">
-                                <input type="file" class="form-control" id="audioFile" accept=".wav,.mp3" required>
-                            </div>
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-upload"></i> Upload and Process
-                            </button>
-                        </form>
-                        <div id="conversionStatus" class="hidden"></div>
-                    </div>
-                </div>
-
-                <!-- Error and Results -->
-                <div id="errorMessage" class="alert alert-danger hidden" role="alert"></div>
-                <div id="results" class="hidden">
-                    <div id="session overview"></div>
-                    <div id="client concerns"></div>
-                    <div id="goals and progress"></div>
-                    <div id="therapeutic interventions"></div>
-                    <div id="clients response"></div>
-                    <div id="challenges"></div>
-                    <div id="homework plan"></div>
-                    <div id="next session prompts"></div>
                 </div>
             </div>
         </div>
-    </div>
+    </header>
 
-<script>
-// Utility Classes
-class ErrorHandler {
-    static show(message, type = 'error') {
-        const errorDiv = document.getElementById('errorMessage');
-        errorDiv.className = `alert alert-${type === 'error' ? 'danger' : 'warning'}`;
-        errorDiv.textContent = message;
-        errorDiv.classList.remove('hidden');
-    }
+    <main class="container">
+        <!-- Input Options Section -->
+        <div id="inputSection" class="row g-4 justify-content-center mb-5 fade-in-up">
 
-    static clear() {
-        document.getElementById('errorMessage').classList.add('hidden');
-    }
-}
+            <!-- Option A: File Upload -->
+            <div class="col-lg-6">
+                <div class="panel input-card h-100">
+                    <div class="section-title">
+                        <i class="bi bi-cloud-arrow-up-fill"></i>
+                        <span>Upload a session recording</span>
+                    </div>
 
-class ProcessingStateManager {
-    static setProcessing(isProcessing) {
-        const elements = {
-            submitButton: document.querySelector('#audioUploadForm button[type="submit"]'),
-            status: document.getElementById('conversionStatus'),
-            processingModel: document.getElementById('processing').value
-        };
+                    <form id="audioUploadForm">
+                        <div class="dropzone mb-3" id="dropzone">
+                            <input type="file" id="audioFile" class="hidden" accept=".wav,.mp3,.m4a,.flac" required>
+                            <i class="bi bi-file-earmark-music dropzone-icon" id="dropzoneIcon"></i>
+                            <h5 class="fw-semibold mb-1" style="color: var(--text-primary);" id="dropzonePrimaryText">
+                                Drag &amp; drop an audio file here</h5>
+                            <p class="text-muted small mb-0" id="dropzoneSubText"
+                                style="color: var(--text-muted) !important;">WAV, MP3, M4A, or FLAC &middot; up to 500MB
+                            </p>
+                            <div id="selectedFileInfo" class="mt-2 hidden">
+                                <span
+                                    class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-3 py-2 fs-6"
+                                    id="fileNameBadge" style="font-family: var(--font-mono); font-weight: 500;">
+                                    <i class="bi bi-music-note-beamed me-1"></i> <span id="fileNameText">file.mp3</span>
+                                </span>
+                                <button type="button" class="btn btn-sm text-danger ms-2" id="clearFileBtn"><i
+                                        class="bi bi-x-lg"></i></button>
+                            </div>
+                        </div>
 
-        elements.submitButton.disabled = isProcessing;
-        elements.status.classList.toggle('hidden', !isProcessing);
-        
-        if (isProcessing) {
-            elements.status.innerHTML = `
-                <div class="spinner-container">
-                    <div class="spinner-border text-primary"></div>
-                    <span class="processing-text">Processing with ${elements.processingModel}...</span>
-                </div>`;
+                        <button type="submit" id="submitUploadBtn" class="btn-custom-primary w-100" disabled>
+                            <i class="bi bi-magic me-1"></i> Generate clinical notes
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Option B: Live Audio Recording -->
+            <div class="col-lg-6">
+                <div class="panel input-card h-100">
+                    <div class="section-title">
+                        <i class="bi bi-mic-fill"></i>
+                        <span>Record live</span>
+                    </div>
+
+                    <div class="recorder-container h-100 justify-content-between">
+                        <div class="mic-pulse-ring my-2" id="micPulseRing">
+                            <i class="bi bi-mic-fill" id="micIcon"></i>
+                        </div>
+
+                        <div class="audio-wave-bars" id="waveBars">
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                        </div>
+
+                        <div class="timer-display mb-3" id="timerDisplay">00:00</div>
+
+                        <div class="d-flex align-items-center gap-2 w-100 justify-content-center">
+                            <button type="button" id="startRecBtn" class="btn-custom-primary px-4">
+                                <i class="bi bi-record-circle me-1"></i> Start recording
+                            </button>
+                            <button type="button" id="stopRecBtn"
+                                class="btn-custom-primary bg-danger border-danger px-4 hidden">
+                                <i class="bi bi-stop-circle me-1"></i> Stop &amp; process
+                            </button>
+                            <button type="button" id="cancelRecBtn" class="btn-danger-custom hidden">
+                                <i class="bi bi-x-circle me-1"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Pipeline State Overlay -->
+        <div id="processingSection" class="panel processing-modal hidden my-4 fade-in-up mx-auto"
+            style="max-width: 640px;">
+            <div class="spinner-border text-emerald mb-3" style="width: 2.75rem; height: 2.75rem;" role="status">
+                <span class="visually-hidden">Processing...</span>
+            </div>
+            <h3 class="mb-1" style="font-size: 1.4rem;">Synthesizing therapy notes</h3>
+            <p class="small mb-4" style="color: var(--text-secondary);">Your session audio is moving through the
+                clinical pipeline below.</p>
+
+            <div class="step-list">
+                <div class="step-item active" id="step1">
+                    <div class="step-icon">01</div>
+                    <div>
+                        <div class="fw-semibold">Verbatim audio transcription</div>
+                        <div class="small opacity-75">Transcribing verbatim speech with Crisper-Whisper Turbo&hellip;</div>
+                    </div>
+                </div>
+                <div class="step-item pending" id="step2">
+                    <div class="step-icon">02</div>
+                    <div>
+                        <div class="fw-semibold">Medical grammar &amp; terminology</div>
+                        <div class="small opacity-75">Correcting medical terms &amp; bilingual context&hellip;</div>
+                    </div>
+                </div>
+                <div class="step-item pending" id="step3">
+                    <div class="step-icon">03</div>
+                    <div>
+                        <div class="fw-semibold">Clinical note synthesis</div>
+                        <div class="small opacity-75">Extracting goals, interventions &amp; concerns with Gemini&hellip;
+                        </div>
+                    </div>
+                </div>
+                <div class="step-item pending" id="step4">
+                    <div class="step-icon">04</div>
+                    <div>
+                        <div class="fw-semibold">Document generation</div>
+                        <div class="small opacity-75">Building the formatted clinical report&hellip;</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message Alert -->
+        <div id="errorMessage" class="alert alert-danger panel hidden mb-4 text-center" role="alert"></div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="hidden fade-in-up">
+            <div class="results-header">
+                <div>
+                    <span class="eyebrow">Session complete</span>
+                    <h2 class="mb-0 mt-1" style="font-size: 1.6rem;">Clinical session notes</h2>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" id="downloadDocxBtn" class="btn-custom-primary">
+                        <i class="bi bi-download"></i> Download .docx
+                    </button>
+                    <button type="button" id="copyAllNotesBtn" class="btn-custom-secondary">
+                        <i class="bi bi-copy"></i> Copy all
+                    </button>
+                    <button type="button" id="newSessionBtn" class="btn-custom-secondary">
+                        <i class="bi bi-arrow-counterclockwise"></i> New session
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid of 8 Note Sections -->
+            <div class="row g-4">
+                <!-- Section 1: Session Overview -->
+                <div class="col-md-6 col-lg-6">
+                    <div class="panel note-card">
+                        <div class="note-card-header">
+                            <h4 class="note-card-title"><i class="bi bi-clipboard-pulse"></i> Session overview</h4>
+                            <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
+                                    class="bi bi-copy"></i> Copy</button>
+                        </div>
+                        <div class="note-card-body" id="card_session_overview"></div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Client Concerns -->
+                <div class="col-md-6 col-lg-6">
+                    <div class="panel note-card">
+                        <div class="note-card-header">
+                            <h4 class="note-card-title"><i class="bi bi-person-exclamation"></i> Client concerns</h4>
+                            <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
+                                    class="bi bi-copy"></i> Copy</button>
+                        </div>
+                        <div class="note-card-body" id="card_client_concerns"></div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Goals & Progress -->
+                <div class="col-md-6 col-lg-6">
+                    <div class="panel note-card">
+                        <div class="note-card-header">
+                            <h4 class="note-card-title"><i class="bi bi-trophy"></i> Goals &amp; progress</h4>
+                            <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
+                                    class="bi bi-copy"></i> Copy</button>
+                        </div>
+                        <div class="note-card-body" id="card_goals_and_progress"></div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Therapeutic Interventions -->
+                <div class="col-md-6 col-lg-6">
+                    <div class="panel note-card">
+                        <div class="note-card-header">
+                            <h4 class="note-card-title"><i class="bi bi-bandaid"></i> Therapeutic interventions</h4>
+                            <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
+                                    class="bi bi-copy"></i> Copy</button>
+                        </div>
+                        <div class="note-card-body" id="card_therapeutic_interventions"></div>
+                    </div>
+                </div>
+
+                <!-- Section 5: Client Response -->
+                <div class="col-md-6 col-lg-6">
+                    <div class="panel note-card">
+                        <div class="note-card-header">
+                            <h4 class="note-card-title"><i class="bi bi-chat-quote"></i> Client response</h4>
+                            <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
+                                    class="bi bi-copy"></i> Copy</button>
+                        </div>
+                        <div class="note-card-body" id="card_clients_response"></div>
+                    </div>
+                </div>
+
+                <!-- Section 6: Challenges -->
+                <div class="col-md-6 col-lg-6">
+                    <div class="panel note-card">
+                        <div class="note-card-header">
+                            <h4 class="note-card-title"><i class="bi bi-lightning-charge"></i> Challenges &amp; barriers
+                            </h4>
+                            <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
+                                    class="bi bi-copy"></i> Copy</button>
+                        </div>
+                        <div class="note-card-body" id="card_challenges"></div>
+                    </div>
+                </div>
+
+                <!-- Section 7: Homework Plan -->
+                <div class="col-md-6 col-lg-6">
+                    <div class="panel note-card">
+                        <div class="note-card-header">
+                            <h4 class="note-card-title"><i class="bi bi-journal-check"></i> Homework &amp; action plan
+                            </h4>
+                            <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
+                                    class="bi bi-copy"></i> Copy</button>
+                        </div>
+                        <div class="note-card-body" id="card_homework_plan"></div>
+                    </div>
+                </div>
+
+                <!-- Section 8: Next Session Prompts -->
+                <div class="col-md-6 col-lg-6">
+                    <div class="panel note-card">
+                        <div class="note-card-header">
+                            <h4 class="note-card-title"><i class="bi bi-lightbulb"></i> Next session prompts</h4>
+                            <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
+                                    class="bi bi-copy"></i> Copy</button>
+                        </div>
+                        <div class="note-card-body" id="card_next_session_prompts"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notifications Container -->
+    <div id="toastContainer" class="toast-container-custom"></div>
+
+    <!-- Bootstrap 5.3 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables for recording & state
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recInterval = null;
+        let recSeconds = 0;
+        let audioContext = null;
+        let analyser = null;
+        let animFrameId = null;
+        let currentDocxUrl = null;
+        let rawTherapyNotes = null;
+
+        // UI Toast helper
+        function showToast(message, icon = 'bi-check-circle-fill') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'custom-toast';
+            toast.innerHTML = `<i class="bi ${icon} text-emerald fs-5"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
-    }
-}
 
-class AudioProcessor {
-    static getFormData() {
-        const formData = new FormData();
-        const audioFile = document.getElementById('audioFile').files[0];
-        const transcriber = document.getElementById('transcriber').value;
-        const processing = document.getElementById('processing').value;
-
-        if (!audioFile) {
-            throw new Error('No audio file selected');
+        // Error display
+        function showError(msg) {
+            const errDiv = document.getElementById('errorMessage');
+            if (msg) {
+                errDiv.textContent = msg;
+                errDiv.classList.remove('hidden');
+            } else {
+                errDiv.classList.add('hidden');
+            }
         }
 
-        formData.append('audio', audioFile);
-        formData.append('transcriber', transcriber);
-        formData.append('processing', processing);
-
-        if (processing === 'local') {
-            formData.append('local_model', document.getElementById('local_model').value);
+        // Formatting Helpers
+        function formatLabel(key) {
+            return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         }
 
-        return formData;
-    }
-}
+        function formatDataContent(data) {
+            if (!data) return '<p class="text-muted fst-italic">Not provided</p>';
 
-// Formatting Functions
-function capitalizeFirstLetter(string) {
-    if (typeof string !== 'string') return '';
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
+            if (Array.isArray(data)) {
+                if (data.length === 0) return '<p class="text-muted fst-italic">None reported</p>';
+                return `<ul class="list-unstyled mb-0">
+                    ${data.map(item => `<li class="d-flex align-items-start gap-2 mb-2"><i class="bi bi-caret-right-fill text-emerald mt-1" style="font-size: 0.75rem;"></i><span>${formatValue(item)}</span></li>`).join('')}
+                </ul>`;
+            }
 
-function formatLabel(key) {
-    return capitalizeFirstLetter(key.replace(/_/g, ' '));
-}
+            if (typeof data === 'object') {
+                return Object.entries(data).map(([key, val]) => {
+                    const formattedKey = formatLabel(key);
+                    const formattedVal = Array.isArray(val) ? formatDataContent(val) : formatValue(val);
+                    return `<div class="mb-3">
+                        <h5>${formattedKey}</h5>
+                        <div>${formattedVal}</div>
+                    </div>`;
+                }).join('');
+            }
 
-function formatValue(value) {
-    if (value === null || value === undefined) {
-        return '<span class="status-message">Not provided</span>';
-    }
-    
-    if (typeof value === 'number') {
-        return `<span class="number">${value}</span>`;
-    }
-    
-    const formattedText = value.toString()
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/(\d+)/g, '<span class="number">$1</span>');
-        
-    return formattedText;
-}
-
-function formatData(data) {
-    if (!data) return '<p class="status-message">Information not available</p>';
-    
-    if (Array.isArray(data)) {
-        return `<ul class="list-unstyled">
-            ${data.map(item => `<li class="list-item">• ${formatValue(item)}</li>`).join('')}
-        </ul>`;
-    }
-    
-    if (typeof data === 'object') {
-        return Object.entries(data).map(([key, value]) => {
-            const formattedKey = formatLabel(key);
-            const formattedValue = Array.isArray(value) ? 
-                formatData(value) : 
-                formatValue(value);
-            
-            return `<div class="section-content">
-                <h4>${formattedKey}</h4>
-                ${formattedValue}
-            </div>`;
-        }).join('');
-    }
-    
-    return formatValue(data);
-}
-
-function displayResults(therapyNotes) {
-    const sections = [
-        'session_overview',
-        'client_concerns',
-        'goals_and_progress',
-        'therapeutic_interventions',
-        'clients_response',
-        'challenges',
-        'homework_plan',
-        'next_session_prompts'
-    ];
-
-    sections.forEach(section => {
-        const element = document.getElementById(section.replace(/_/g, ' '));
-        if (element && therapyNotes[section]) {
-            element.innerHTML = `
-                <h3>${formatLabel(section)}</h3>
-                ${formatData(therapyNotes[section])}
-            `;
+            return formatValue(data);
         }
-    });
 
-    document.getElementById('results').classList.remove('hidden');
-}
+        function formatValue(val) {
+            if (val === null || val === undefined) return '<span class="text-muted">N/A</span>';
+            if (typeof val === 'number') return `<span class="fw-semibold text-cyan">${val}</span>`;
+            return val.toString()
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        }
 
-// Download Function
-function downloadDocx(url) {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'therapy_notes.docx';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
+        // Display results
+        function renderResults(notes, docxUrl) {
+            currentDocxUrl = docxUrl;
+            rawTherapyNotes = notes;
 
-// Event Listeners
-document.addEventListener('DOMContentLoaded', () => {
-    // Model selection handling
-    document.getElementById('processing').addEventListener('change', (e) => {
-        document.getElementById('localModelSelection').style.display = 
-            e.target.value === 'local' ? 'block' : 'none';
-    });
+            const mapping = {
+                'card_session_overview': notes.session_overview,
+                'card_client_concerns': notes.client_concerns,
+                'card_goals_and_progress': notes.goals_and_progress,
+                'card_therapeutic_interventions': notes.therapeutic_interventions,
+                'card_clients_response': notes.clients_response,
+                'card_challenges': notes.challenges,
+                'card_homework_plan': notes.homework_plan,
+                'card_next_session_prompts': notes.next_session_prompts
+            };
 
-    // Audio upload form
-    document.getElementById('audioUploadForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        ErrorHandler.clear();
-        
-        try {
-            ProcessingStateManager.setProcessing(true);
-            const formData = AudioProcessor.getFormData();
-            
-            const response = await fetch('/process_audio_file', {
-                method: 'POST',
-                body: formData
+            Object.entries(mapping).forEach(([elementId, content]) => {
+                const el = document.getElementById(elementId);
+                if (el) {
+                    el.innerHTML = formatDataContent(content);
+                }
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            if (!data.validated_therapy_notes) {
-                throw new Error('Invalid response format');
-            }
-
-            downloadDocx(data.docx_url);
-            displayResults(data.validated_therapy_notes);
-        } catch (error) {
-            ErrorHandler.show(error.message);
-        } finally {
-            ProcessingStateManager.setProcessing(false);
+            document.getElementById('processingSection').classList.add('hidden');
+            document.getElementById('inputSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-    });
 
-    // Recording button
-    document.getElementById('startRecording').addEventListener('click', async () => {
-        const button = document.getElementById('startRecording');
-        const recordingStatus = document.getElementById('recordingStatus');
-        
-        try {
-            button.disabled = true;
-            button.innerHTML = '<i class="bi bi-mic-fill"></i> Recording...';
-            recordingStatus.classList.remove('hidden');
-            
-            const audioBlob = await recordAudio();
-            const formData = new FormData();
-            formData.append('audio', audioBlob, 'recording.wav');
-            
-            ProcessingStateManager.setProcessing(true);
-            
-            const response = await fetch('/process_audio_file', {
-                method: 'POST',
-                body: AudioProcessor.getFormData()
+        // Copy single card text
+        function copyCardText(btn) {
+            const cardBody = btn.closest('.note-card').querySelector('.note-card-body');
+            if (cardBody) {
+                const text = cardBody.innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Section copied to clipboard!');
+                });
+            }
+        }
+
+        // Processing Pipeline State Simulation
+        let stepTimer = null;
+        function startProcessingUI() {
+            showError(null);
+            document.getElementById('inputSection').classList.add('hidden');
+            document.getElementById('processingSection').classList.remove('hidden');
+
+            const steps = [
+                { id: 'step1', delay: 0 },
+                { id: 'step2', delay: 3500 },
+                { id: 'step3', delay: 8000 },
+                { id: 'step4', delay: 14000 }
+            ];
+
+            steps.forEach((s, idx) => {
+                setTimeout(() => {
+                    for (let i = 1; i <= 4; i++) {
+                        const el = document.getElementById(`step${i}`);
+                        if (i < idx + 1) {
+                            el.className = 'step-item completed';
+                        } else if (i === idx + 1) {
+                            el.className = 'step-item active';
+                        } else {
+                            el.className = 'step-item pending';
+                        }
+                    }
+                }, s.delay);
+            });
+        }
+
+        function resetProcessingSteps() {
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`step${i}`).className = i === 1 ? 'step-item active' : 'step-item pending';
+            }
+        }
+
+        // API Submission
+        async function submitAudioPayload(formData) {
+            startProcessingUI();
+            try {
+                const response = await fetch('/process_audio_file', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Server processing failed.');
+                }
+
+                if (!data.validated_therapy_notes) {
+                    throw new Error('Invalid notes structure received.');
+                }
+
+                renderResults(data.validated_therapy_notes, data.docx_url);
+                showToast('Clinical notes generated successfully!');
+            } catch (err) {
+                console.error(err);
+                document.getElementById('processingSection').classList.add('hidden');
+                document.getElementById('inputSection').classList.remove('hidden');
+                showError(err.message || 'An error occurred while processing audio.');
+            }
+        }
+
+        // DOM Ready Initializations
+        document.addEventListener('DOMContentLoaded', () => {
+            // Drag and Drop Upload logic
+            const dropzone = document.getElementById('dropzone');
+            const audioFileInput = document.getElementById('audioFile');
+            const selectedFileInfo = document.getElementById('selectedFileInfo');
+            const fileNameText = document.getElementById('fileNameText');
+            const submitUploadBtn = document.getElementById('submitUploadBtn');
+            const clearFileBtn = document.getElementById('clearFileBtn');
+            const dropzonePrimaryText = document.getElementById('dropzonePrimaryText');
+            const dropzoneSubText = document.getElementById('dropzoneSubText');
+            const dropzoneIcon = document.getElementById('dropzoneIcon');
+
+            dropzone.addEventListener('click', (e) => {
+                if (e.target !== clearFileBtn && !clearFileBtn.contains(e.target)) {
+                    audioFileInput.click();
+                }
             });
 
-            const data = await response.json();
+            ['dragenter', 'dragover'].forEach(evt => {
+                dropzone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('dragover');
+                });
+            });
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Error processing voice input.');
+            ['dragleave', 'drop'].forEach(evt => {
+                dropzone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('dragover');
+                });
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    audioFileInput.files = e.dataTransfer.files;
+                    handleFileSelected();
+                }
+            });
+
+            audioFileInput.addEventListener('change', handleFileSelected);
+
+            function handleFileSelected() {
+                const file = audioFileInput.files[0];
+                if (file) {
+                    fileNameText.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+                    selectedFileInfo.classList.remove('hidden');
+                    dropzonePrimaryText.classList.add('hidden');
+                    dropzoneSubText.classList.add('hidden');
+                    dropzoneIcon.className = 'bi bi-file-earmark-check-fill dropzone-icon text-emerald';
+                    submitUploadBtn.disabled = false;
+                }
             }
 
-            downloadDocx(data.docx_url);
-            displayResults(data.validated_therapy_notes);
-        } catch (error) {
-            ErrorHandler.show(error.message);
-        } finally {
-            button.disabled = false;
-            button.innerHTML = '<i class="bi bi-mic-fill"></i> Start Recording';
-            recordingStatus.classList.add('hidden');
-            ProcessingStateManager.setProcessing(false);
-        }
-    });
-});
-</script>
+            clearFileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                audioFileInput.value = '';
+                selectedFileInfo.classList.add('hidden');
+                dropzonePrimaryText.classList.remove('hidden');
+                dropzoneSubText.classList.remove('hidden');
+                dropzoneIcon.className = 'bi bi-file-earmark-music dropzone-icon';
+                submitUploadBtn.disabled = true;
+            });
 
-<!-- Bootstrap JS Bundle -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+            document.getElementById('audioUploadForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const file = audioFileInput.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('audio', file);
+                submitAudioPayload(formData);
+            });
+
+            // Live Voice Recorder Logic
+            const startRecBtn = document.getElementById('startRecBtn');
+            const stopRecBtn = document.getElementById('stopRecBtn');
+            const cancelRecBtn = document.getElementById('cancelRecBtn');
+            const micPulseRing = document.getElementById('micPulseRing');
+            const timerDisplay = document.getElementById('timerDisplay');
+            const waveBars = document.querySelectorAll('.wave-bar');
+            let mediaStream = null;
+
+            startRecBtn.addEventListener('click', async () => {
+                showError(null);
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                    // Determine best supported MIME type
+                    let options = {};
+                    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                        options = { mimeType: 'audio/webm;codecs=opus' };
+                    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                        options = { mimeType: 'audio/webm' };
+                    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                        options = { mimeType: 'audio/mp4' };
+                    }
+
+                    mediaRecorder = new MediaRecorder(mediaStream, options);
+                    audioChunks = [];
+
+                    // Setup Web Audio Analyser for Wave Visualizer
+                    try {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        const source = audioContext.createMediaStreamSource(mediaStream);
+                        analyser = audioContext.createAnalyser();
+                        analyser.fftSize = 32;
+                        source.connect(analyser);
+
+                        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                        function updateWaveVisualizer() {
+                            if (!analyser) return;
+                            analyser.getByteFrequencyData(dataArray);
+                            waveBars.forEach((bar, index) => {
+                                const val = dataArray[index % dataArray.length] || 10;
+                                const height = Math.max(6, (val / 255) * 36);
+                                bar.style.height = `${height}px`;
+                            });
+                            animFrameId = requestAnimationFrame(updateWaveVisualizer);
+                        }
+                        updateWaveVisualizer();
+                    } catch (e) {
+                        console.warn('Web Audio visualizer setup skipped:', e);
+                    }
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data && event.data.size > 0) {
+                            audioChunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const recordedChunks = [...audioChunks];
+                        const duration = recSeconds;
+                        const mime = mediaRecorder.mimeType || 'audio/webm';
+                        cleanupRecording();
+
+                        if (duration < 1 || recordedChunks.length === 0) {
+                            showError('Recording was too short. Please record for at least 2 seconds.');
+                            return;
+                        }
+
+                        let ext = 'webm';
+                        if (mime.includes('mp4')) ext = 'mp4';
+                        else if (mime.includes('ogg')) ext = 'ogg';
+                        else if (mime.includes('wav')) ext = 'wav';
+
+                        const audioBlob = new Blob(recordedChunks, { type: mime });
+                        const formData = new FormData();
+                        formData.append('audio', audioBlob, `live_recording.${ext}`);
+                        submitAudioPayload(formData);
+                    };
+
+                    mediaRecorder.start(250);
+
+                    // UI States
+                    micPulseRing.classList.add('recording');
+                    startRecBtn.classList.add('hidden');
+                    stopRecBtn.classList.remove('hidden');
+                    cancelRecBtn.classList.remove('hidden');
+
+                    recSeconds = 0;
+                    timerDisplay.textContent = '00:00';
+                    recInterval = setInterval(() => {
+                        recSeconds++;
+                        const mins = String(Math.floor(recSeconds / 60)).padStart(2, '0');
+                        const secs = String(recSeconds % 60).padStart(2, '0');
+                        timerDisplay.textContent = `${mins}:${secs}`;
+                    }, 1000);
+
+                } catch (err) {
+                    console.error('Microphone error:', err);
+                    showError('Microphone access was denied or not supported by your browser.');
+                }
+            });
+
+            stopRecBtn.addEventListener('click', () => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+            });
+
+            cancelRecBtn.addEventListener('click', () => {
+                if (mediaRecorder) {
+                    mediaRecorder.onstop = null;
+                    if (mediaRecorder.state === 'recording') {
+                        mediaRecorder.stop();
+                    }
+                }
+                cleanupRecording();
+                showToast('Recording cancelled', 'bi-x-circle-fill');
+            });
+
+            function cleanupRecording() {
+                if (recInterval) { clearInterval(recInterval); recInterval = null; }
+                if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+                if (audioContext && audioContext.state !== 'closed') {
+                    audioContext.close().catch(() => { });
+                    audioContext = null;
+                }
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(track => track.stop());
+                    mediaStream = null;
+                }
+
+                micPulseRing.classList.remove('recording');
+                startRecBtn.classList.remove('hidden');
+                stopRecBtn.classList.add('hidden');
+                cancelRecBtn.classList.add('hidden');
+                timerDisplay.textContent = '00:00';
+                waveBars.forEach(bar => bar.style.height = '8px');
+            }
+
+            // Results Action Buttons
+            document.getElementById('downloadDocxBtn').addEventListener('click', () => {
+                if (currentDocxUrl) {
+                    const a = document.createElement('a');
+                    a.href = currentDocxUrl;
+                    a.download = 'therapy_notes.docx';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    showToast('Downloading DOCX report...');
+                }
+            });
+
+            document.getElementById('copyAllNotesBtn').addEventListener('click', () => {
+                if (rawTherapyNotes) {
+                    const text = JSON.stringify(rawTherapyNotes, null, 2);
+                    navigator.clipboard.writeText(text).then(() => {
+                        showToast('All notes copied to clipboard!');
+                    });
+                }
+            });
+
+            document.getElementById('newSessionBtn').addEventListener('click', () => {
+                resetProcessingSteps();
+                document.getElementById('resultsSection').classList.add('hidden');
+                document.getElementById('inputSection').classList.remove('hidden');
+                audioFileInput.value = '';
+                selectedFileInfo.classList.add('hidden');
+                dropzonePrimaryText.classList.remove('hidden');
+                dropzoneSubText.classList.remove('hidden');
+                dropzoneIcon.className = 'bi bi-file-earmark-music dropzone-icon';
+                submitUploadBtn.disabled = true;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    </script>
 </body>
+
 </html>

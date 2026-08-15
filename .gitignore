@@ -1,18 +1,62 @@
-/venv/
-/.venv/
-/.idea/
-/.vscode/
-/.pytest_cache/
-/.mypy_cache/
-/.coverage.*
-/__pycache__/
-/*.pyc
-/*.pyo
-/*.pyd
-/*.pyi
-/.env
-/.env.*
-/.env*/
-/pdfs/
-/model/
-/vectorstore/
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# Environments & Secrets
+.env
+.env.*
+.env*/
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Logs
+*.log
+app.log
+
+# App runtime data: uploads, downloads, transcripts
+uploads/*
+!uploads/.gitkeep
+downloads/*
+!downloads/.gitkeep
+transcript/*
+!transcript/.gitkeep
+pdfs/*
+!pdfs/.gitkeep
+
+# Models & HuggingFace cache
+models/
+model/
+.cache/
+vectorstore/
+
+# IDE & OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Testing & Type checking
+.pytest_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Distribution & Build
+dist/
+build/
+*.egg-info/
+.eggs/

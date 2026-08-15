@@ -2,19 +2,16 @@
 
 ## Overview
 
- AI  Therapy Notes Maker is a comprehensive system designed to transcribe, process, and generate detailed therapy notes from audio recordings. Leveraging advanced Automatic Speech Recognition (ASR) and natural language processing, the pipeline ensures accurate and insightful summaries, optimized for therapeutic applications.
+**AI Therapy Notes Maker** is a clinical documentation system designed to transcribe audio recordings and generate structured therapy notes. Powered by **Crisper-Whisper 2.0 Turbo** (`nyralabs/CrisperWhisper2.0_turbo`) for high-speed **verbatim transcription** and Google Gemini for clinical note synthesis, the pipeline captures every clinical nuance (fillers, stutters, repetitions, and vocal events) to produce accurate summaries in DOCX format.
 
 ## Features
 
-- **Automatic Transcription**: Converts audio files into text using WhisperXTranscriber.
-- **Audio Preprocessing**: Optimizes audio for ASR accuracy.
-- **Therapy Notes Generation**: Produces structured therapy notes with identified techniques and session prompts.
-- **API Integration**: Provides RESTful endpoints for seamless integration with other applications.
-- **Document Generation**: Creates well-formatted therapy notes documents in DOCX format.
-
-## Architecture
-
-![Architecture Diagram](docs/architecture.png)
+- **Verbatim Speech Recognition**: Powered by `Crisper-Whisper 2.0 Turbo` (capturing all fillers, pauses, repetitions, and vocal cues without diarization overhead).
+- **Fast Inference**: Lightweight 4-decoder-layer architecture optimized for rapid clinical transcription.
+- **Audio Preprocessing**: Optional DSP filter optimization (filtering rumble, normalization).
+- **Clinical Therapy Notes Generation**: Produces structured clinical notes (DAP, SOAP, MSE, and thematic summaries) using Google Gemini.
+- **DOCX Document Generation**: Automatically formats and exports therapy notes into structured Word documents.
+- **RESTful API & Interactive UI**: Clean web interface and REST endpoints for session uploads and real-time processing.
 
 ## Installation
 
@@ -34,8 +31,8 @@
 
 2. **Create a Virtual Environment**
     ```bash
-    python3 -m venv venv
-    source venv/bin/activate
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
     ```
 
 3. **Install Dependencies**
@@ -45,11 +42,12 @@
 
 4. **Configure Environment Variables**
 
-    Create a `.env` file in the [config](http://_vscodecontentref_/0) directory with the following variables:
+    Create a `.env` file in the root directory:
     ```env
     UPLOAD_FOLDER=./uploads
     LOG_FILE=app.log
     GEMINI_API_KEY=your_gemini_api_key
+    CRISPER_WHISPER_MODEL=turbo
     ```
 
 5. **Set Up Folders**
@@ -59,10 +57,10 @@
 
 ## Usage
 
-### Running the API Server
+### Running the Application
 
 ```bash
 python app.py
-
-The server will start on http://localhost:5000.
 ```
+
+The server will start on `http://localhost:5000`.

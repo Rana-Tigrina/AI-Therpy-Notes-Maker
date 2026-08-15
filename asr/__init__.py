@@ -1,3 +1,3 @@
-from .whisperX import WhisperXTranscriber
+from .crisper_whisper import CrisperWhisperTranscriber
 
-__all__ = ['WhisperXTranscriber']
+__all__ = ['CrisperWhisperTranscriber']

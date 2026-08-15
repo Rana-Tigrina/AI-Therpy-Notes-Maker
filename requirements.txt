@@ -1,17 +1,15 @@
-torch==2.3.1 
-torchaudio==2.3.1 
-# pip install torch==2.3.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu118
-whisperx @ git+https://github.com/m-bain/whisperX.git
+torch==2.8.0
+torchaudio==2.8.0
+crisperwhisper[transformers]
 transformers
-google-generativeai
-# spacy
+google-genai
 Flask
 pydub
 python-dotenv
 werkzeug
-requests 
+requests
 noisereduce
+librosa
 python-docx
 ffmpeg-python
 accelerate
-openai-whisper

@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+.github
+
+# Python bytecode & environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local runtime data & logs
+*.log
+.env
+.env.local
+uploads/*
+downloads/*
+transcripts/*
+!static/demo.mp3
+
+# Testing & coverage artifacts
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local model caches (HuggingFace / Torch)
+~/.cache
+.cache/
+models/

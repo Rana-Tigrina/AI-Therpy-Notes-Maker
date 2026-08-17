@@ -1,0 +1,19 @@
+services:
+  ai-therapy-notes:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: therapy_notes_maker
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - PORT=5000
+      - ASR_BACKEND=gemini
+      - STORAGE_DIR=/app
+    volumes:
+      - ./uploads:/app/uploads
+      - ./downloads:/app/downloads
+      - ./transcripts:/app/transcripts
+    restart: unless-stopped

@@ -208,6 +208,53 @@ Downloads the generated Microsoft Word (`.docx`) report.
 
 ---
 
+## 🐳 Docker Deployment
+
+You can run the entire application in an isolated, production-grade Docker container with one command:
+
+### Option A: Using Docker Compose (Recommended)
+```bash
+# 1. Ensure your GEMINI_API_KEY is set in .env
+cp .env.example .env
+
+# 2. Build and start the container
+docker compose up -d
+
+# 3. Open your browser
+http://localhost:5000
+```
+
+### Option B: Using Docker CLI
+```bash
+# Build the Docker image
+docker build -t ai-therapy-notes-maker .
+
+# Run the container
+docker run -d -p 5000:5000 \
+  -e GEMINI_API_KEY="your_api_key_here" \
+  -e ASR_BACKEND="gemini" \
+  --name therapy_notes \
+  ai-therapy-notes-maker
+```
+
+---
+
+## 🔄 CI/CD Automation (GitHub Actions)
+
+This repository includes enterprise-grade GitHub Actions workflows:
+
+1. **`CI Workflow` ([`.github/workflows/ci.yml`](.github/workflows/ci.yml))**:
+   - Triggers on every push & pull request to `main`.
+   - Runs `flake8` linting and static analysis.
+   - Executes the automated unit & integration test suite (`tests/test_app.py`).
+   - Verifies that the Docker container builds without errors.
+2. **`CD Workflow` ([`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml))**:
+   - Triggers on Git release tags (e.g. `v1.0.0`) or manual dispatch.
+   - Builds multi-platform Docker images (`linux/amd64` and `linux/arm64`).
+   - Automatically publishes the verified container to **GitHub Container Registry (`ghcr.io`)**.
+
+---
+
 ## License
 
 Distributed under the MIT License. See `LICENSE` for details.

@@ -82,13 +82,17 @@
             width: 100%;
         }
 
-        h1, h2, h3, .brand-font {
+        h1,
+        h2,
+        h3,
+        .brand-font {
             font-family: var(--font-display);
             font-weight: 600;
             letter-spacing: -0.01em;
         }
 
-        h4, h5 {
+        h4,
+        h5 {
             font-family: var(--font-body);
         }
 
@@ -208,6 +212,7 @@
                 max-width: 100%;
                 transform: none;
             }
+
             .hero-preview {
                 display: none;
             }
@@ -249,11 +254,26 @@
             border-radius: 4px;
             background: var(--rule-strong);
         }
-        .pline.w-95 { width: 95%; }
-        .pline.w-90 { width: 90%; }
-        .pline.w-80 { width: 80%; }
-        .pline.w-70 { width: 70%; }
-        .pline.w-60 { width: 60%; }
+
+        .pline.w-95 {
+            width: 95%;
+        }
+
+        .pline.w-90 {
+            width: 90%;
+        }
+
+        .pline.w-80 {
+            width: 80%;
+        }
+
+        .pline.w-70 {
+            width: 70%;
+        }
+
+        .pline.w-60 {
+            width: 60%;
+        }
 
         .preview-tags {
             display: flex;
@@ -586,9 +606,17 @@
         }
 
         @keyframes pulseGlow {
-            0% { box-shadow: 0 0 0 0 rgba(193, 88, 74, 0.45); }
-            70% { box-shadow: 0 0 0 18px rgba(193, 88, 74, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(193, 88, 74, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(193, 88, 74, 0.45);
+            }
+
+            70% {
+                box-shadow: 0 0 0 18px rgba(193, 88, 74, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(193, 88, 74, 0);
+            }
         }
 
         .audio-wave-bars {
@@ -722,12 +750,14 @@
         }
 
         @media (max-width: 767px) {
+
             .results-actions-group .btn-custom-primary,
             .results-actions-group .btn-custom-secondary {
                 flex: 1 1 calc(50% - 0.25rem);
                 font-size: 0.85rem;
                 padding: 0.65rem 0.75rem;
             }
+
             .results-actions-group #downloadDocxBtn {
                 flex: 1 1 100%;
             }
@@ -856,8 +886,14 @@
         }
 
         /* ---------- Utility Classes ---------- */
-        .text-emerald { color: var(--ink-amber) !important; }
-        .text-cyan { color: var(--ink-sage) !important; }
+        .text-emerald {
+            color: var(--ink-amber) !important;
+        }
+
+        .text-cyan {
+            color: var(--ink-sage) !important;
+        }
+
         .alert-danger {
             background: var(--ink-clay-soft) !important;
             border-color: rgba(193, 88, 74, 0.4) !important;
@@ -865,11 +901,26 @@
             padding: 1rem;
             border-radius: 0.5rem;
         }
-        .badge.bg-success { background: var(--ink-sage-soft) !important; }
-        .text-success { color: var(--ink-sage) !important; }
-        .border-success { border-color: rgba(134, 166, 141, 0.4) !important; }
-        .text-danger { color: #e29289 !important; }
-        .spinner-border.text-emerald { color: var(--ink-amber) !important; }
+
+        .badge.bg-success {
+            background: var(--ink-sage-soft) !important;
+        }
+
+        .text-success {
+            color: var(--ink-sage) !important;
+        }
+
+        .border-success {
+            border-color: rgba(134, 166, 141, 0.4) !important;
+        }
+
+        .text-danger {
+            color: #e29289 !important;
+        }
+
+        .spinner-border.text-emerald {
+            color: var(--ink-amber) !important;
+        }
 
         /* ---------- Toast Notifications (Centered on Mobile) ---------- */
         .toast-container-custom {
@@ -909,22 +960,39 @@
         }
 
         @keyframes slideUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
-        .hidden { display: none !important; }
+        .hidden {
+            display: none !important;
+        }
 
         .fade-in-up {
             animation: fadeInUp 0.4s ease forwards;
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @media (prefers-reduced-motion: reduce) {
+
             .fade-in-up,
             .mic-pulse-ring.recording,
             .custom-toast {
@@ -948,7 +1016,9 @@
 
                     <span class="eyebrow">Clinical documentation from session audio</span>
                     <h1 class="hero-title mt-2">From session audio to a finished clinical note.</h1>
-                    <p class="hero-sub">Upload or record a therapy session on any device. TherapyNotes AI transcribes it with verbatim fidelity, validates clinical accuracy, and generates structured, audit-ready reports.</p>
+                    <p class="hero-sub">Upload or record a therapy session on any device. TherapyNotes AI transcribes it
+                        with verbatim fidelity, validates clinical accuracy, and generates structured, audit-ready
+                        reports.</p>
 
                     <div class="engine-row">
                         <div class="engine-badge whisper">
@@ -965,7 +1035,8 @@
                 <div class="hero-preview">
                     <div class="preview-card">
                         <div class="preview-card-head">
-                            <span class="eyebrow" style="font-size: 0.66rem; color: var(--ink-sage);">Clinical Report</span>
+                            <span class="eyebrow" style="font-size: 0.66rem; color: var(--ink-sage);">Clinical
+                                Report</span>
                             <span class="preview-check"><i class="bi bi-shield-check"></i>Validated</span>
                         </div>
                         <h5 class="preview-title">Session Overview</h5>
@@ -998,12 +1069,15 @@
         <div id="inputSection" class="mb-5 fade-in-up">
 
             <!-- Demo Banner Card -->
-            <div class="demo-banner-card panel d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+            <div
+                class="demo-banner-card panel d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
                 <div class="d-flex align-items-center gap-3 w-100">
                     <div class="demo-icon-badge"><i class="bi bi-play-circle-fill"></i></div>
                     <div>
-                        <div class="fw-semibold text-primary" style="font-size: 0.96rem;">Quick Demo Session Available</div>
-                        <div class="small text-secondary">Test the pipeline instantly with a pre-loaded 27s CBT consultation audio — free and unlimited.</div>
+                        <div class="fw-semibold text-primary" style="font-size: 0.96rem;">Quick Demo Session Available
+                        </div>
+                        <div class="small text-secondary">Test the pipeline instantly with a pre-loaded 5 minutes CBT
+                            consultation audio — free and unlimited.</div>
                     </div>
                 </div>
                 <button type="button" id="tryDemoBtn" class="btn-custom-primary text-nowrap w-100 w-md-auto">
@@ -1023,10 +1097,12 @@
             <!-- Segmented Mode Control (Mobile / Tablet / Desktop Switcher) -->
             <div class="mode-switcher-container">
                 <div class="segmented-control" role="tablist" aria-label="Input Mode Selector">
-                    <button type="button" id="tabUploadBtn" class="segmented-btn active" role="tab" aria-selected="true" aria-controls="uploadPanel">
+                    <button type="button" id="tabUploadBtn" class="segmented-btn active" role="tab" aria-selected="true"
+                        aria-controls="uploadPanel">
                         <i class="bi bi-cloud-arrow-up-fill"></i> Upload Audio File
                     </button>
-                    <button type="button" id="tabRecordBtn" class="segmented-btn" role="tab" aria-selected="false" aria-controls="recordPanel">
+                    <button type="button" id="tabRecordBtn" class="segmented-btn" role="tab" aria-selected="false"
+                        aria-controls="recordPanel">
                         <i class="bi bi-mic-fill"></i> Record Live Session
                     </button>
                 </div>
@@ -1045,21 +1121,26 @@
 
                         <form id="audioUploadForm">
                             <div class="dropzone mb-3" id="dropzone">
-                                <input type="file" id="audioFile" class="hidden" accept=".wav,.mp3,.m4a,.flac,.webm,.ogg,.mp4,.opus" required>
+                                <input type="file" id="audioFile" class="hidden"
+                                    accept=".wav,.mp3,.m4a,.flac,.webm,.ogg,.mp4,.opus" required>
                                 <i class="bi bi-file-earmark-music dropzone-icon" id="dropzoneIcon"></i>
-                                <h5 class="fw-semibold mb-1" style="color: var(--text-primary);" id="dropzonePrimaryText">
+                                <h5 class="fw-semibold mb-1" style="color: var(--text-primary);"
+                                    id="dropzonePrimaryText">
                                     Tap or drop audio file here</h5>
                                 <p class="text-muted small mb-0" id="dropzoneSubText"
-                                    style="color: var(--text-muted) !important;">WAV, MP3, M4A, WebM, OGG &middot; up to 60s
+                                    style="color: var(--text-muted) !important;">WAV, MP3, M4A, WebM, OGG &middot; up to
+                                    60s
                                 </p>
                                 <div id="selectedFileInfo" class="mt-2 hidden">
                                     <span
                                         class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-3 py-2 fs-6 text-wrap"
-                                        id="fileNameBadge" style="font-family: var(--font-mono); font-weight: 500; max-width: 100%; word-break: break-all;">
-                                        <i class="bi bi-music-note-beamed me-1"></i> <span id="fileNameText">file.mp3</span>
+                                        id="fileNameBadge"
+                                        style="font-family: var(--font-mono); font-weight: 500; max-width: 100%; word-break: break-all;">
+                                        <i class="bi bi-music-note-beamed me-1"></i> <span
+                                            id="fileNameText">file.mp3</span>
                                     </span>
-                                    <button type="button" class="btn btn-sm text-danger ms-1" id="clearFileBtn" aria-label="Remove selected file"><i
-                                            class="bi bi-x-lg"></i></button>
+                                    <button type="button" class="btn btn-sm text-danger ms-1" id="clearFileBtn"
+                                        aria-label="Remove selected file"><i class="bi bi-x-lg"></i></button>
                                 </div>
                             </div>
 
@@ -1079,7 +1160,8 @@
                         </div>
 
                         <div class="recorder-container h-100 justify-content-between">
-                            <div class="mic-pulse-ring my-2" id="micPulseRing" role="status" aria-label="Microphone Status">
+                            <div class="mic-pulse-ring my-2" id="micPulseRing" role="status"
+                                aria-label="Microphone Status">
                                 <i class="bi bi-mic-fill" id="micIcon"></i>
                             </div>
 
@@ -1096,7 +1178,8 @@
 
                             <div class="timer-display mb-3" id="timerDisplay">
                                 <span id="timeCount">00:00</span>
-                                <span class="text-muted" style="font-size: 0.82rem; font-weight: 400;"> / 01:00 max</span>
+                                <span class="text-muted" style="font-size: 0.82rem; font-weight: 400;"> / 01:00
+                                    max</span>
                             </div>
 
                             <div class="recorder-actions">
@@ -1107,7 +1190,8 @@
                                     class="btn-custom-primary bg-danger border-danger w-100 w-sm-auto px-4 hidden">
                                     <i class="bi bi-stop-circle me-1"></i> Stop &amp; process
                                 </button>
-                                <button type="button" id="cancelRecBtn" class="btn-danger-custom w-100 w-sm-auto hidden">
+                                <button type="button" id="cancelRecBtn"
+                                    class="btn-danger-custom w-100 w-sm-auto hidden">
                                     <i class="bi bi-x-circle me-1"></i> Cancel
                                 </button>
                             </div>
@@ -1124,7 +1208,8 @@
                 <span class="visually-hidden">Processing...</span>
             </div>
             <h3 class="mb-1" style="font-size: clamp(1.2rem, 3vw, 1.45rem);">Synthesizing therapy notes</h3>
-            <p class="small mb-4" style="color: var(--text-secondary);">Your session audio is moving through the clinical pipeline below.</p>
+            <p class="small mb-4" style="color: var(--text-secondary);">Your session audio is moving through the
+                clinical pipeline below.</p>
 
             <div class="step-list">
                 <div class="step-item active" id="step1">
@@ -1145,7 +1230,8 @@
                     <div class="step-icon">03</div>
                     <div>
                         <div class="fw-semibold">Clinical note synthesis</div>
-                        <div class="small opacity-75">Extracting interventions &amp; goals with Gemma 4 31B IT&hellip;</div>
+                        <div class="small opacity-75">Extracting interventions &amp; goals with Gemma 4 31B IT&hellip;
+                        </div>
                     </div>
                 </div>
                 <div class="step-item pending" id="step4">
@@ -1183,14 +1269,18 @@
 
             <!-- Quick Section Jump Bar for Mobile -->
             <div class="quick-nav-container" aria-label="Jump to note section">
-                <a href="#card_session_overview" class="quick-nav-pill"><i class="bi bi-clipboard-pulse"></i> Overview</a>
-                <a href="#card_client_concerns" class="quick-nav-pill"><i class="bi bi-person-exclamation"></i> Concerns</a>
+                <a href="#card_session_overview" class="quick-nav-pill"><i class="bi bi-clipboard-pulse"></i>
+                    Overview</a>
+                <a href="#card_client_concerns" class="quick-nav-pill"><i class="bi bi-person-exclamation"></i>
+                    Concerns</a>
                 <a href="#card_goals_and_progress" class="quick-nav-pill"><i class="bi bi-trophy"></i> Goals</a>
-                <a href="#card_therapeutic_interventions" class="quick-nav-pill"><i class="bi bi-bandaid"></i> Interventions</a>
+                <a href="#card_therapeutic_interventions" class="quick-nav-pill"><i class="bi bi-bandaid"></i>
+                    Interventions</a>
                 <a href="#card_clients_response" class="quick-nav-pill"><i class="bi bi-chat-quote"></i> Response</a>
                 <a href="#card_challenges" class="quick-nav-pill"><i class="bi bi-lightning-charge"></i> Challenges</a>
                 <a href="#card_homework_plan" class="quick-nav-pill"><i class="bi bi-journal-check"></i> Homework</a>
-                <a href="#card_next_session_prompts" class="quick-nav-pill"><i class="bi bi-lightbulb"></i> Next Session</a>
+                <a href="#card_next_session_prompts" class="quick-nav-pill"><i class="bi bi-lightbulb"></i> Next
+                    Session</a>
             </div>
 
             <!-- Grid of 8 Note Sections -->
@@ -1259,7 +1349,8 @@
                 <div class="col-12 col-md-6">
                     <div class="panel note-card">
                         <div class="note-card-header">
-                            <h4 class="note-card-title"><i class="bi bi-lightning-charge"></i> Challenges &amp; barriers</h4>
+                            <h4 class="note-card-title"><i class="bi bi-lightning-charge"></i> Challenges &amp; barriers
+                            </h4>
                             <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
                                     class="bi bi-copy"></i> Copy</button>
                         </div>
@@ -1271,7 +1362,8 @@
                 <div class="col-12 col-md-6">
                     <div class="panel note-card">
                         <div class="note-card-header">
-                            <h4 class="note-card-title"><i class="bi bi-journal-check"></i> Homework &amp; action plan</h4>
+                            <h4 class="note-card-title"><i class="bi bi-journal-check"></i> Homework &amp; action plan
+                            </h4>
                             <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
                                     class="bi bi-copy"></i> Copy</button>
                         </div>

@@ -36,6 +36,9 @@ model/
 .cache/
 vectorstore/
 
+# Vercel & Deployment
+.vercel/
+
 # IDE & OS files
 .vscode/
 .idea/

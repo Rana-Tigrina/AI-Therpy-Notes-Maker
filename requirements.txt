@@ -1,15 +1,6 @@
-torch==2.8.0
-torchaudio==2.8.0
-crisperwhisper[transformers]
-transformers
-google-genai
-Flask
-pydub
-python-dotenv
-werkzeug
-requests
-noisereduce
-librosa
-python-docx
-ffmpeg-python
-accelerate
+# Core Application & Cloud Deployment Dependencies (Vercel Serverless Compatible)
+Flask>=3.0.0
+werkzeug>=3.0.0
+google-genai>=0.1.1
+python-dotenv>=1.0.0
+python-docx>=1.1.0

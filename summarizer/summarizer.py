@@ -1,370 +1,283 @@
+"""
+Clinical Summarization & Therapy Notes Generation Module.
+
+Analyzes transcribed therapy session transcripts and synthesizes structured,
+evidence-based clinical documentation (overview, client concerns, goals, interventions,
+response, challenges, homework, next session prompts) using Google Gemini.
+"""
+
 import json
 import logging
-import os
-from dotenv import load_dotenv
+from typing import Any, Dict
 from google import genai
 from google.genai import types
-import pandas as pd
+from config.config import logger, GEMINI_API_KEY, NOTE_GENERATION_MODEL, FALLBACK_MODEL
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Initialize Google GenAI client
+client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
-# Load environment variables once
-load_dotenv()
-api_key = os.getenv('GEMINI_API_KEY')
-
-# Initialize the new GenAI client
-client = genai.Client(api_key=api_key)
-
-# Example of a curated list reference
+# Curated reference list of clinical therapeutic modalities
 KNOWN_TECHNIQUES = [
     "Cognitive-Behavioral Therapy (CBT)",
     "Solution-Focused Brief Therapy (SFBT)",
-    "Behavioral Techniques",
-    "Person-Centered Therapy",
-    "Stress Management Techniques",
+    "Behavioral Activation",
+    "Person-Centered / Humanistic Therapy",
+    "Stress Management & Grounding Techniques",
     "Narrative Therapy",
     "Psychoeducation",
     "Strength-Based Approach",
-    "Socratic Questioning (Cognitive Therapy)",
+    "Socratic Questioning",
     "Motivational Interviewing (MI)",
-    "Mindfulness-Based Interventions",
+    "Mindfulness-Based Interventions (MBCT/MBSR)",
     "Emotion-Focused Therapy (EFT)",
-    "Open-Ended Questioning",
-    "Reflective Questions",
-    "Grounding and Relaxation Techniques",
+    "Open-Ended & Reflective Questioning",
     "Values Clarification",
     "Problem-Solving Therapy",
     "Acceptance and Commitment Therapy (ACT)",
-    # ...and so on...
 ]
 
-def grammar_agent(text_str: str) -> str:
+
+def _extract_json(text: str) -> Dict[str, Any]:
     """
-    Correct grammar, fill missing words, and ensure text consistency without altering the original meaning.
-    Specifically tailored for medical transcripts containing both Hindi and English.
-    """
-    grammar_prompt = f"""
-    You are a highly accurate grammar correction tool specialized in medical transcripts that may contain both Hindi and English.
-    Perform the following tasks:
-    1. Correct all grammatical errors.
-    2. Fill in missing words or sentences based on the context.
-    3. Ensure that the corrected text maintains the original meaning without adding any new information.
-    4. Preserve the bilingual nature of the transcript without altering the language of each segment.
-
-    Original Transcript:
-    {text_str}
-
-    Corrected Transcript:
-
-    IMPORTANT ADDITIONAL GUIDANCE:
-    - Only correct grammar where context is clear, do not add or exaggerate facts not present in the text.
-    - If any part of the sentence is ambiguous or incomplete, infer meaning conservatively without inventing details.
-    """
-    grammar_response = client.models.generate_content(
-        model='gemma-4-31b-it',
-        contents=grammar_prompt,
-    )
-    corrected_text = grammar_response.text.strip()
-
-    if not corrected_text:
-        logging.error("Grammar agent returned empty response.")
-        return text_str  # Return original text if correction fails
-
-    return corrected_text
-
-def generate_therapy_notes(corrected_text: str) -> dict:
-    """
-    Generates detailed therapy notes including identified techniques and next session prompts.
+    Extract and parse JSON object from a model response string.
 
     Args:
-        corrected_text (str): The grammatically corrected conversation text.
+        text (str): Raw string output from the model.
 
     Returns:
-        dict: Structured therapy notes.
+        Dict[str, Any]: Parsed JSON dictionary, or empty dict on failure.
     """
-    therapy_prompt = f"""
-    Act as an experienced psychotherapist analyzing a therapy session transcript. Review the following conversation 
-    between a therapist and client, carefully noting the therapeutic dynamics and generate detailed session notes:
-
-    {corrected_text}
-
-     Analyze the conversation and provide a structured therapeutic note in the following JSON format:
-    {{ ... }}
-
-    {{
-      "session_overview": {{
-        "summary": "Provide a Detailed overview of the main topics and session focus.",
-        "presenting concerns": "Detail the client's initial concerns or reasons for seeking therapy.",
-        "therapeutic direction": "Describe the overall direction of the therapeutic discussion."
-      }},
-      "client_concerns": {{
-        "issues": "Elaborate on the specific issues faced by the client.",
-        "emotional state ": "Describe the client's emotional state during the session."
-      }},
-      "goals_and_progress": {{
-        "short term goals": "Immediate objectives identified in numbered or bullet list",
-        "long term goals": "Overall therapeutic goals in numbered or bullet list",
-        "progress notes": "Progress on previous goals if applicable"
-      }},
-      "therapeutic_interventions": {{
-        "techniques used": "Specific therapeutic techniques employed",
-        "rationale": "Reasoning for chosen interventions"
-      }},
-      "clients_response": {{
-        "engagement level": "Assess the client's participation and receptiveness.",
-        "insights gained": "Note any key realizations or breakthroughs.",
-        "feedback": "Record the client's feedback on the interventions."
-      }},
-      "challenges": {{
-        "resistance noted": "Identify any resistance or defensive patterns.",
-        "transference issues":  "Highlight notable transference or countertransference.",
-        "areas needing focus": "List of Challenges requiring additional attention"
-      }},
-      "homework_plan": {{
-        "assigned tasks": "Specific homework or exercises assigned",
-        "focus areas": "Areas to work on before next session",
-        "recommendations": "Additional therapeutic recommendations"
-      }},
-      "next_session_prompts": {{
-      "name of the technique": ["list next session question which the doctor can ask based on the todays sessions that aligned to techniques actually used in session and make sure questions must be relevant"],
-      }}
-    }}
-
-    Ensure the analysis is professional, objective, and focuses on observable behaviors and therapeutic interactions.
-
-    Known techniques (for reference only, do not invent new ones or hallucinate):
-    {KNOWN_TECHNIQUES}
-
-    IMPORTANT (for identfied_techniques and next_session_prompts):
-    1. Refer only to known, relevant therapy techniques from a curated list.
-    2. Include techniques in "identified_techniques" strictly if they match the conversation.
-    3. Base "next_session_prompts" on the identified techniques without introducing new or unmentioned methods.
-    4. Avoid hallucinating techniques; if none apply, leave 'identified_techniques' empty.
-
-    EXTRA CAUTION:
-    - Remain strictly true to the conversation; do not assume or infer substantial unmentioned details.
-    - If certain information is missing or unclear, indicate that it is not mentioned instead of filling hypothetical data.
-
-    FORMATTING RULES:
-    1. Output ONLY the JSON object, nothing else
-    2. Use ONLY double quotes for strings and keys
-    3. NO trailing commas
-    4. NO comments or explanations
-    5. COMPLETE all fields, If data is missing, leave placeholders or note that it's not mentioned rather than creating facts.
-    6. STOP once the JSON object is complete
-    """
-    try:
-        therapy_response = client.models.generate_content(
-            model='gemma-4-31b-it',
-            contents=therapy_prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
-            )
-        )
-        logging.info(f"Gemini API therapy notes response: {therapy_response.text}")
-
-        response_text = therapy_response.text.strip()
-        json_start = response_text.find('{')
-        json_end = response_text.rfind('}') + 1
-        if json_start != -1 and json_end != -1:
-            response_text = response_text[json_start:json_end]
-            try:
-                therapy_notes = json.loads(response_text)
-                return therapy_notes
-            except json.JSONDecodeError as e:
-                logging.error(f"JSON decode error in therapy notes: {str(e)}")
-                logging.debug(f"Invalid JSON response: {response_text}")
-                return {}
-        else:
-            logging.error("No JSON content found in therapy notes response.")
-            logging.debug(f"Response received: {response_text}")
-            return {}
-    except Exception as e:
-        logging.error(f"Error generating therapy notes: {e}")
+    if not text:
         return {}
 
-def validate_therapy_notes(original_text: str, therapy_notes: dict) -> dict:
+    text = text.strip()
+    # Find JSON boundaries if surrounded by markdown code blocks or extra text
+    json_start = text.find("{")
+    json_end = text.rfind("}") + 1
+
+    if json_start != -1 and json_end > json_start:
+        cleaned = text[json_start:json_end]
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError as err:
+            logger.error(f"JSON parsing error: {err}")
+            logger.debug(f"Failed JSON snippet: {cleaned[:300]}...")
+            return {}
+
+    return {}
+
+
+def generate_therapy_notes(transcript_text: str) -> Dict[str, Any]:
     """
-    Validates and corrects the therapy notes against the original conversation text.
+    Generate comprehensive structured clinical therapy notes from session transcript.
+    Attempts primary model (gemma-4-31b-it) with automated fallback to gemini-2.5-flash.
 
     Args:
-        original_text (str): The original conversation text between therapist and client.
-        therapy_notes (dict): The generated therapy notes.
+        transcript_text (str): The conversation transcript between therapist and client.
 
     Returns:
-        dict: Validated and corrected therapy notes.
+        Dict[str, Any]: Structured clinical notes dictionary.
     """
-    validation_prompt = f"""
-    You are an expert psychotherapist and analyst. Perform validation of the therapeutic notes against the original conversation.
+    if not client:
+        logger.error("Gemini client is not initialized. Please configure GEMINI_API_KEY.")
+        return {}
 
-    **Original Conversation:**
-    {original_text}
+    therapy_prompt = f"""
+Act as an experienced clinical psychologist and licensed psychotherapist analyzing a verbatim therapy session transcript.
+Review the following conversation between therapist and client, carefully evaluate therapeutic dynamics, and generate structured clinical notes.
 
-    **Therapeutic Notes:**
-    {json.dumps(therapy_notes, indent=2)}
+**Session Transcript:**
+{transcript_text}
 
-    **Validation Tasks:**
-    1. Identify any inaccuracies or omissions in the therapeutic notes compared to the original conversation.
-    2. Remove any exaggerations, unsupported assumptions, or newly introduced content.
-    3. Provide necessary corrections to ensure the therapeutic notes accurately reflect the original conversation.
-    4. Ensure that 'identified_techniques' and 'next_session_prompts' are accurately reflected based on the conversation.
-    5. If data is missing, leave placeholders or note that it's not mentioned rather than creating facts.
+**Required JSON Structure:**
+{{
+  "session_overview": {{
+    "summary": "Detailed overview of the main discussion topics and session trajectory.",
+    "presenting_concerns": "Client's stated concerns and reasons for seeking therapy.",
+    "therapeutic_direction": "Clinical direction and focus of the dialogue."
+  }},
+  "client_concerns": {{
+    "issues": "Specific emotional, cognitive, or relational issues described.",
+    "emotional_state": "Observed and reported emotional state during the session."
+  }},
+  "goals_and_progress": {{
+    "short_term_goals": "Immediate actionable goals identified in the session.",
+    "long_term_goals": "Overall overarching therapeutic goals.",
+    "progress_notes": "Progress made regarding previous interventions or insights."
+  }},
+  "therapeutic_interventions": {{
+    "techniques_used": "Specific therapeutic techniques employed.",
+    "rationale": "Clinical reasoning for the chosen interventions."
+  }},
+  "clients_response": {{
+    "engagement_level": "Client's level of participation, openness, and receptiveness.",
+    "insights_gained": "Breakthroughs, reframing, or realizations noted by the client.",
+    "feedback": "Direct or indirect client feedback regarding interventions."
+  }},
+  "challenges": {{
+    "resistance_noted": "Defensive patterns, resistance, or avoidance behaviors.",
+    "transference_issues": "Transference or counter-transference dynamics.",
+    "areas_needing_focus": "Clinical areas requiring prioritized attention."
+  }},
+  "homework_plan": {{
+    "assigned_tasks": "Specific exercises, journaling, or behavioral tasks assigned.",
+    "focus_areas": "Cognitive/emotional focus areas between sessions.",
+    "recommendations": "Additional therapeutic self-care recommendations."
+  }},
+  "next_session_prompts": {{
+    "therapeutic_prompts": [
+      "Targeted exploratory questions for the therapist to ask next session aligned with identified techniques."
+    ]
+  }}
+}}
 
-    Ensure:
-    1. 'identified_techniques' accurately match the conversation and do not include irrelevant methods.
-    2. Any techniques incorrectly listed are removed or corrected.
-    3. 'next_session_prompts' correspond precisely to the corrected techniques.
+**Clinical Guidance:**
+1. Ground all notes strictly in observable transcript evidence; do not invent or assume unmentioned facts.
+2. Reference known clinical techniques accurately: {KNOWN_TECHNIQUES}.
+3. Maintain objective, professional clinical terminology.
+4. Return ONLY the valid JSON object.
+"""
+    models_to_try = [NOTE_GENERATION_MODEL]
+    if FALLBACK_MODEL and FALLBACK_MODEL not in models_to_try:
+        models_to_try.append(FALLBACK_MODEL)
 
-
-    **Your Validation and Corrections:**
-    Return the corrected therapeutic notes in the same JSON format.    
-    """
-
-    try:
-        validation_response = client.models.generate_content(
-            model='gemma-4-31b-it',
-            contents=validation_prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json"
+    for idx, model_name in enumerate(models_to_try):
+        try:
+            logger.info(f"Generating clinical notes using model '{model_name}'...")
+            response = client.models.generate_content(
+                model=model_name,
+                contents=therapy_prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                ),
             )
-        )
-        logging.info(f"Gemini API validation response: {validation_response.text}")
+            parsed = _extract_json(response.text or "")
+            if parsed:
+                return parsed
+            logger.warning(f"Empty or unparseable JSON received from '{model_name}'.")
+        except Exception as e:
+            if idx < len(models_to_try) - 1:
+                next_model = models_to_try[idx + 1]
+                logger.warning(
+                    f"Note generation failed with '{model_name}' ({e}); attempting automatic fallback to '{next_model}'."
+                )
+            else:
+                logger.error(f"Error generating therapy notes across all candidate models ({models_to_try}): {e}")
 
-        response_text = validation_response.text.strip()
-        json_start = response_text.find('{')
-        json_end = response_text.rfind('}') + 1
-        if json_start != -1 and json_end != -1:
-            response_text = response_text[json_start:json_end]
-            try:
-                validated_notes = json.loads(response_text)
-                return validated_notes
-            except json.JSONDecodeError as e:
-                logging.error(f"JSON decode error in validation: {str(e)}")
-                return therapy_notes  # Return original if validation fails
-        else:
-            logging.error("No JSON content found in validation response.")
-            return therapy_notes  # Return original if no JSON found
-    except Exception as e:
-        logging.error(f"Error validating therapy notes: {e}")
+    return {}
+
+
+def validate_therapy_notes(original_text: str, therapy_notes: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Cross-validate and verify generated therapy notes against the original transcript
+    to prevent hallucinations, omissions, or factual exaggerations.
+    Includes automated fallback to fallback model if primary model is unavailable.
+
+    Args:
+        original_text (str): The raw conversation transcript.
+        therapy_notes (dict): The initial generated therapy notes.
+
+    Returns:
+        Dict[str, Any]: Validated and corrected clinical notes dictionary.
+    """
+    if not client or not therapy_notes:
         return therapy_notes
 
-def process_with_gemini(text: str) -> dict:
+    validation_prompt = f"""
+You are a senior supervising clinical psychologist conducting quality assurance on therapeutic documentation.
+Validate the provided clinical notes against the verbatim session transcript.
+
+**Original Conversation Transcript:**
+{original_text}
+
+**Draft Clinical Notes:**
+{json.dumps(therapy_notes, indent=2)}
+
+**Validation Checklist:**
+1. Ensure all notes reflect facts from the conversation without distortion or hallucination.
+2. Remove any unsupported assumptions or exaggerated claims.
+3. Ensure therapeutic interventions and next-session prompts accurately correspond to what was discussed.
+4. Preserve the exact same JSON schema.
+
+Return ONLY the corrected, validated JSON object.
+"""
+    models_to_try = [NOTE_GENERATION_MODEL]
+    if FALLBACK_MODEL and FALLBACK_MODEL not in models_to_try:
+        models_to_try.append(FALLBACK_MODEL)
+
+    for idx, model_name in enumerate(models_to_try):
+        try:
+            logger.info(f"Validating clinical notes against transcript using '{model_name}'...")
+            response = client.models.generate_content(
+                model=model_name,
+                contents=validation_prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                ),
+            )
+            validated = _extract_json(response.text or "")
+            if validated:
+                return validated
+        except Exception as e:
+            if idx < len(models_to_try) - 1:
+                next_model = models_to_try[idx + 1]
+                logger.warning(
+                    f"Validation failed with '{model_name}' ({e}); attempting automatic fallback to '{next_model}'."
+                )
+            else:
+                logger.warning(f"Validation step failed ({e}); falling back to initial therapy notes.")
+
+    return therapy_notes
+
+
+def process_with_gemini(text: Any) -> Dict[str, Any]:
     """
-    Processes text using Gemini API with grammar correction, generates therapy notes including techniques and prompts,
-    validates the notes, and returns the final structured therapy notes.
+    High-level pipeline: processes session transcript, synthesizes structured
+    clinical therapy notes, validates for clinical accuracy, and returns structured data.
 
     Args:
-        text (str): The input text to process.
+        text (str or dict): Input transcript text or dictionary containing 'text'.
 
     Returns:
-        dict: The final structured therapy notes after validation.
+        Dict[str, Any]: Final validated clinical therapy notes.
     """
+    if isinstance(text, dict):
+        text_str = text.get("text", "")
+    else:
+        text_str = str(text)
+
+    if not text_str.strip():
+        logger.warning("Empty transcript provided to process_with_gemini.")
+        return _empty_notes_structure()
+
     try:
-        if isinstance(text, dict):
-            text_str = text.get("text", "")
-        elif isinstance(text, pd.DataFrame):
-            text_str = "\n".join(f"{row.get('speaker_role', 'unknown')}: {row.get('text', '')}" 
-                                 for _, row in text.iterrows())
-        else:
-            text_str = str(text)
+        # Step 1: Generate initial notes
+        raw_notes = generate_therapy_notes(text_str)
+        if not raw_notes:
+            return _empty_notes_structure()
 
-        if not api_key:
-            logging.error("GEMINI_API_KEY not found in environment variables")
-            raise ValueError("GEMINI_API_KEY not found in environment variables")
-
-        # Step 1: Grammar Correction
-        # corrected_text = grammar_agent(text_str)
-
-        # Step 2: Generate Therapy Notes (including techniques and prompts)
-        # therapy_notes = generate_therapy_notes(corrected_text)
-        
-        therapy_notes = generate_therapy_notes(text_str)
-        print('\n\nNotes generated\n\n\n')
-
-        # Step 3: Validate Therapy Notes
-        validated_therapy_notes = validate_therapy_notes(text_str, therapy_notes)
-        print('\n\n\nNotes validated\n\n\n')
-
-        return validated_therapy_notes
-        
-        # return therapy_notes
+        # Step 2: Validate against original transcript
+        validated_notes = validate_therapy_notes(text_str, raw_notes)
+        return validated_notes
 
     except Exception as e:
-        logging.error(f"Gemini API error: {e}")
-        return {
-            "session_overview": {},
-            "client_concerns": {},            
-            "goals_and_progress": {},            
-            "therapeutic_interventions": {},
-            "clients_response": {},
-            "challenges": {},
-            "homework_plan": {},
-            "identified_techniques": [],
-            "next_session_prompts": []
-        }
-    
+        logger.error(f"Error in process_with_gemini pipeline: {e}")
+        return _empty_notes_structure()
 
-# if __name__ == "__main__":
-#     import sys
-#     if len(sys.argv) != 2:
-#         print("Usage: python process_with_gemini.py <path_to_transcript_file>")
-#         sys.exit(1)
 
-#     transcript_file_path = sys.argv[1]
-    
-#     if not os.path.isfile(transcript_file_path):
-#         print(f"File not found: {transcript_file_path}")
-#         sys.exit(1)
-
-#     with open(transcript_file_path, 'r') as file:
-#         input_text = file.read()
-
-#     result = process_with_gemini(input_text)
-#     print(json.dumps(result, indent=2))
-
-def process_with_local(transcript: str, model_name: str = "llama") -> dict:
-    """
-    Summarizes the transcript using a local Ollama instance.
-    """
-    import requests
-    url = "http://localhost:11434/api/chat"
-    prompt = f"""
-You are an expert clinical psychologist and AI assistant. Your task is to analyze the following transcription of a therapy session and generate structured, clinical therapy notes.
-
-The notes MUST be structured as a JSON object containing exactly these 8 keys:
-1. "session_overview": A summary of the session flow, dynamic, and tone. (Format: list of sentences/points or a single paragraph string)
-2. "client_concerns": Primary issues, feelings, or thoughts the client presented. (Format: list of strings)
-3. "goals_and_progress": Treatment goals discussed, and any progress made towards them. (Format: list of strings)
-4. "therapeutic_interventions": Techniques, strategies, or interventions used by the therapist. (Format: list of strings)
-5. "clients_response": How the client reacted to interventions and their level of engagement. (Format: list of strings or single paragraph string)
-6. "challenges": Difficulties, resistances, or barriers observed. (Format: list of strings)
-7. "homework_plan": Specific tasks or exercises assigned for the client to complete before the next session. (Format: list of strings or single paragraph string)
-8. "next_session_prompts": Questions, topics, or focus areas for the next session. (Format: list of strings)
-
-Respond ONLY with the JSON object. Do not include markdown code block syntax (like ```json ... ```). Make sure it is valid parseable JSON.
-
-Therapy Session Transcript:
-{transcript}
-"""
-    payload = {
-        "model": model_name,
-        "messages": [
-            {"role": "user", "content": prompt}
-        ],
-        "stream": False,
-        "format": "json"
+def _empty_notes_structure() -> Dict[str, Any]:
+    """Return fallback empty notes structure."""
+    return {
+        "session_overview": {
+            "summary": "Session documentation unavailable or processing failed.",
+            "presenting_concerns": "",
+            "therapeutic_direction": ""
+        },
+        "client_concerns": {},
+        "goals_and_progress": {},
+        "therapeutic_interventions": {},
+        "clients_response": {},
+        "challenges": {},
+        "homework_plan": {},
+        "next_session_prompts": {}
     }
-    
-    try:
-        response = requests.post(url, json=payload, timeout=60)
-        response.raise_for_status()
-        result = response.json()
-        content = result.get("message", {}).get("content", "").strip()
-        return json.loads(content)
-    except requests.exceptions.ConnectionError:
-        raise ConnectionError(
-            "Local LLM server (Ollama) is not running on http://localhost:11434. Please start Ollama or select the Gemini model."
-        )
-    except Exception as e:
-        raise RuntimeError(f"Local LLM processing failed: {str(e)}")

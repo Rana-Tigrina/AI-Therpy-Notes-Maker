@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>TherapyNotes AI - Session Audio to Clinical Documentation</title>
     <!-- Google Fonts: warm editorial serif for display, precise sans for body, mono for data -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,18 +11,15 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
-    <!-- Bootstrap 5.3 CSS (layout/grid utilities only, visuals are overridden below) -->
+    <!-- Bootstrap 5.3 CSS (layout/grid utilities only) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         /* =========================================================
            TOKEN SYSTEM
-           A clinical-notebook identity: warm ink paper on dark,
-           one highlighter-gold accent for action, dusty sage for
-           verified/complete states, muted clay-red reserved only
-           for recording/alerts. Deliberately not the near-black +
-           acid-green or blue-violet defaults.
+           Warm ink paper on dark palette with amber accent,
+           dusty sage for verified states, clay-red for recording.
         ========================================================= */
         :root {
             --bg-base: #15120e;
@@ -45,22 +42,21 @@
             --font-display: 'Fraunces', 'Georgia', serif;
             --font-body: 'IBM Plex Sans', sans-serif;
             --font-mono: 'IBM Plex Mono', monospace;
+
+            /* Safe area padding for mobile devices (iPhone notch/island, Android nav) */
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
         }
 
         * {
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        /* Don't rely solely on Bootstrap's CDN-loaded .container for width/centering.
-           Defining it here too means the layout stays centered and capped even if
-           that stylesheet is slow, blocked, or fails to load. */
-        .container {
-            max-width: 1200px;
-            margin-left: auto;
-            margin-right: auto;
-            padding-left: 1.5rem;
-            padding-right: 1.5rem;
-            width: 100%;
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
@@ -72,20 +68,27 @@
             color: var(--text-primary);
             font-family: var(--font-body);
             min-height: 100vh;
-            padding-bottom: 4rem;
+            min-height: -webkit-fill-available;
+            padding-bottom: calc(3rem + var(--safe-bottom));
+            overflow-x: hidden;
         }
 
-        h1,
-        h2,
-        h3,
-        .brand-font {
+        .container {
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: max(1rem, var(--safe-left));
+            padding-right: max(1rem, var(--safe-right));
+            width: 100%;
+        }
+
+        h1, h2, h3, .brand-font {
             font-family: var(--font-display);
             font-weight: 600;
             letter-spacing: -0.01em;
         }
 
-        h4,
-        h5 {
+        h4, h5 {
             font-family: var(--font-body);
         }
 
@@ -96,20 +99,21 @@
             outline-offset: 2px;
         }
 
-        /* ---------- Eyebrow / mono labels (data & structure, not decoration) ---------- */
+        /* ---------- Eyebrow / mono labels ---------- */
         .eyebrow {
             font-family: var(--font-mono);
-            font-size: 0.72rem;
-            letter-spacing: 0.14em;
+            font-size: clamp(0.68rem, 2vw, 0.75rem);
+            letter-spacing: 0.12em;
             text-transform: uppercase;
             color: var(--ink-amber);
+            display: inline-block;
         }
 
-        /* ---------- Panels (replaces frosted glassmorphism with a paper/chart panel) ---------- */
+        /* ---------- Panels ---------- */
         .panel {
             background: var(--bg-panel);
             border: 1px solid var(--rule);
-            border-radius: 0.6rem;
+            border-radius: 0.75rem;
             box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset, 0 14px 30px -18px rgba(0, 0, 0, 0.65);
             transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
         }
@@ -118,80 +122,71 @@
             border-color: var(--rule-strong);
         }
 
-        /* ---------- Header ---------- */
+        /* ---------- Header / Hero ---------- */
         .header-container {
             position: relative;
-            padding: 3.5rem 0 2.5rem 0;
+            padding: clamp(1.75rem, 4vw, 3.25rem) 0 clamp(1.25rem, 3vw, 2.25rem) 0;
             border-bottom: 1px solid var(--rule);
-            margin-bottom: 3rem;
+            margin-bottom: clamp(1.5rem, 3.5vw, 2.5rem);
         }
 
         .brand-row {
             display: flex;
             align-items: center;
             gap: 0.65rem;
-            margin-bottom: 1.75rem;
+            margin-bottom: clamp(1rem, 2.5vw, 1.5rem);
         }
 
         .brand-mark {
-            width: 34px;
-            height: 34px;
+            width: clamp(32px, 4vw, 38px);
+            height: clamp(32px, 4vw, 38px);
             border-radius: 8px;
             background: linear-gradient(155deg, var(--ink-amber), #b9812b);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #17130c;
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             flex-shrink: 0;
         }
 
         .brand-name {
             font-family: var(--font-mono);
-            font-size: 0.9rem;
-            letter-spacing: 0.04em;
+            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+            letter-spacing: 0.06em;
             color: var(--text-secondary);
+            font-weight: 600;
         }
 
         .hero-title {
-            font-size: clamp(2.1rem, 4vw, 3rem);
+            font-size: clamp(1.85rem, 4.5vw, 2.85rem);
             font-weight: 600;
             color: var(--text-primary);
-            max-width: 15ch;
-            line-height: 1.08;
+            line-height: 1.12;
+            max-width: 20ch;
         }
 
         .hero-sub {
             color: var(--text-secondary);
-            font-size: 1.05rem;
-            max-width: 46ch;
-            margin-top: 1rem;
+            font-size: clamp(0.92rem, 2.2vw, 1.05rem);
+            max-width: 52ch;
+            margin-top: 0.85rem;
             line-height: 1.6;
         }
 
-        /* Signature element: a waveform that resolves into ruled note lines.
-           This is the literal thesis of the product: session audio in,
-           structured written notes out. */
         .hero-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 2.5rem;
+            gap: 1.75rem;
             align-items: center;
         }
 
         @media (min-width: 992px) {
             .hero-grid {
-                grid-template-columns: 1.15fr 0.85fr;
+                grid-template-columns: 1.2fr 0.8fr;
             }
         }
 
-        .hero-copy {
-            min-width: 0;
-        }
-
-        /* ---------- Hero preview: a mock of the generated note, fills the
-           space next to the hero copy with something the product actually
-           produces, instead of empty background ---------- */
         .hero-preview {
             display: flex;
             justify-content: center;
@@ -202,10 +197,20 @@
             max-width: 360px;
             background: var(--bg-panel);
             border: 1px solid var(--rule-strong);
-            border-radius: 0.65rem;
-            padding: 1.5rem;
-            transform: rotate(1.5deg);
-            box-shadow: 0 22px 44px -22px rgba(0, 0, 0, 0.7);
+            border-radius: 0.75rem;
+            padding: clamp(1.15rem, 3vw, 1.5rem);
+            transform: rotate(1.2deg);
+            box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.7);
+        }
+
+        @media (max-width: 991px) {
+            .preview-card {
+                max-width: 100%;
+                transform: none;
+            }
+            .hero-preview {
+                display: none; /* Hide preview on mobile/tablet to keep immediate focus on recording/upload */
+            }
         }
 
         .preview-card-head {
@@ -213,72 +218,54 @@
             align-items: center;
             justify-content: space-between;
             gap: 0.75rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.9rem;
         }
 
         .preview-check {
             font-family: var(--font-mono);
             font-size: 0.68rem;
-            letter-spacing: 0.04em;
             color: var(--ink-sage);
             display: inline-flex;
             align-items: center;
             gap: 0.3rem;
-            white-space: nowrap;
         }
 
         .preview-title {
-            font-family: var(--font-body);
-            font-size: 1rem;
+            font-size: 0.98rem;
             font-weight: 600;
             color: var(--text-primary);
-            margin-bottom: 0.9rem;
+            margin-bottom: 0.75rem;
         }
 
         .preview-lines {
             display: flex;
             flex-direction: column;
-            gap: 0.55rem;
+            gap: 0.5rem;
         }
 
         .pline {
             display: block;
-            height: 7px;
+            height: 6px;
             border-radius: 4px;
             background: var(--rule-strong);
         }
-
-        .pline.w-95 {
-            width: 95%;
-        }
-
-        .pline.w-90 {
-            width: 90%;
-        }
-
-        .pline.w-80 {
-            width: 80%;
-        }
-
-        .pline.w-70 {
-            width: 70%;
-        }
-
-        .pline.w-60 {
-            width: 60%;
-        }
+        .pline.w-95 { width: 95%; }
+        .pline.w-90 { width: 90%; }
+        .pline.w-80 { width: 80%; }
+        .pline.w-70 { width: 70%; }
+        .pline.w-60 { width: 60%; }
 
         .preview-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 0.4rem;
-            margin: 1rem 0;
+            margin: 0.85rem 0;
         }
 
         .preview-tag {
             font-family: var(--font-mono);
             font-size: 0.68rem;
-            padding: 0.22rem 0.55rem;
+            padding: 0.2rem 0.5rem;
             border-radius: 0.3rem;
             background: var(--ink-sage-soft);
             color: var(--ink-sage);
@@ -287,7 +274,7 @@
         .preview-divider {
             border: none;
             border-top: 1px solid var(--rule);
-            margin: 1rem 0;
+            margin: 0.85rem 0;
         }
 
         .preview-footer {
@@ -303,18 +290,11 @@
             color: var(--ink-amber);
         }
 
-        @media (max-width: 991px) {
-            .preview-card {
-                max-width: 320px;
-                transform: none;
-            }
-        }
-
         .signature-graphic {
             width: 100%;
             height: auto;
-            margin-top: 2.25rem;
-            max-width: 540px;
+            margin-top: 1.5rem;
+            max-width: 520px;
         }
 
         .signature-bar {
@@ -333,58 +313,24 @@
             opacity: 0.32;
         }
 
-        @media (prefers-reduced-motion: no-preference) {
-            .signature-bar {
-                animation: settleBar 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
-            }
-
-            .signature-line {
-                animation: drawLine 0.9s ease-out backwards;
-            }
-
-            @keyframes settleBar {
-                from {
-                    transform: scaleY(0.15);
-                    opacity: 0;
-                }
-
-                to {
-                    transform: scaleY(1);
-                    opacity: 0.85;
-                }
-            }
-
-            @keyframes drawLine {
-                from {
-                    opacity: 0;
-                    transform: translateX(-8px);
-                }
-
-                to {
-                    opacity: 0.55;
-                    transform: translateX(0);
-                }
-            }
-        }
-
-        /* Engine status row */
+        /* Engine status badges */
         .engine-row {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-top: 1.75rem;
+            gap: 0.5rem;
+            margin-top: 1.35rem;
         }
 
         .engine-badge {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.4rem 0.85rem;
+            gap: 0.45rem;
+            padding: 0.35rem 0.75rem;
             border-radius: 0.4rem;
             background: var(--bg-panel-raised);
             border: 1px solid var(--rule);
             font-family: var(--font-mono);
-            font-size: 0.78rem;
+            font-size: clamp(0.7rem, 2vw, 0.78rem);
             color: var(--text-secondary);
         }
 
@@ -410,33 +356,76 @@
             font-weight: 600;
         }
 
-        /* ---------- Section headings ---------- */
+        /* ---------- Segmented Mode Switcher (Mobile & Tablet) ---------- */
+        .mode-switcher-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .segmented-control {
+            display: flex;
+            background: var(--bg-panel-raised);
+            padding: 4px;
+            border-radius: 0.6rem;
+            border: 1px solid var(--rule-strong);
+            gap: 4px;
+        }
+
+        .segmented-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: clamp(0.85rem, 2.2vw, 0.95rem);
+            border-radius: 0.45rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 44px; /* Apple/Google minimum touch target */
+        }
+
+        .segmented-btn.active {
+            background: var(--ink-amber);
+            color: #17130c;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .segmented-btn:hover:not(.active) {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* ---------- Section Headings ---------- */
         .section-title {
-            font-size: 1.05rem;
+            font-size: clamp(0.95rem, 2.5vw, 1.05rem);
             font-weight: 600;
             color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            margin-bottom: 1.4rem;
-            padding-bottom: 0.9rem;
+            gap: 0.5rem;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.75rem;
             border-bottom: 1px solid var(--rule);
         }
 
         .section-title i {
             color: var(--ink-amber);
-            font-size: 1rem;
+            font-size: 1.05rem;
         }
 
         .input-card {
-            padding: 1.75rem;
+            padding: clamp(1.2rem, 3vw, 1.75rem);
         }
 
         /* ---------- Dropzone ---------- */
         .dropzone {
             border: 1.5px dashed var(--rule-strong);
-            border-radius: 0.5rem;
-            padding: 2.25rem 1.5rem;
+            border-radius: 0.6rem;
+            padding: clamp(1.5rem, 4vw, 2.25rem) 1.25rem;
             text-align: center;
             background: var(--bg-panel-raised);
             cursor: pointer;
@@ -451,25 +440,29 @@
         }
 
         .dropzone-icon {
-            font-size: 2.25rem;
+            font-size: clamp(1.85rem, 5vw, 2.25rem);
             color: var(--ink-amber);
-            margin-bottom: 0.65rem;
+            margin-bottom: 0.5rem;
             display: block;
         }
 
-        /* ---------- Buttons ---------- */
+        /* ---------- Action Buttons (Touch Friendly 44px+) ---------- */
         .btn-custom-primary {
             background: var(--ink-amber);
             color: #17130c;
             font-weight: 600;
             border: none;
-            padding: 0.7rem 1.6rem;
-            border-radius: 0.45rem;
+            padding: 0.75rem 1.4rem;
+            border-radius: 0.5rem;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            font-size: clamp(0.88rem, 2.2vw, 0.95rem);
+            min-height: 46px; /* Touch target */
+            cursor: pointer;
+            text-decoration: none;
         }
 
         .btn-custom-primary:hover:not(:disabled) {
@@ -478,13 +471,15 @@
             transform: translateY(-1px);
         }
 
+        .btn-custom-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
         .btn-custom-primary:disabled {
             opacity: 0.4;
             cursor: not-allowed;
         }
 
-        /* Danger variant reuses the primary button structure for the Stop button,
-           tuned to the clay accent instead of amber */
         .btn-custom-primary.bg-danger {
             background: var(--ink-clay) !important;
             border-color: var(--ink-clay) !important;
@@ -500,23 +495,37 @@
             color: var(--text-secondary);
             font-weight: 500;
             border: 1px solid var(--rule-strong);
-            padding: 0.7rem 1.4rem;
-            border-radius: 0.45rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            font-size: clamp(0.85rem, 2vw, 0.92rem);
+            min-height: 46px;
+            cursor: pointer;
         }
 
         .btn-custom-secondary:hover {
             color: var(--text-primary);
             border-color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.02);
         }
 
         .btn-danger-custom {
             background: var(--ink-clay-soft);
             border: 1px solid rgba(193, 88, 74, 0.4);
             color: #e29289;
-            padding: 0.55rem 1.15rem;
-            border-radius: 0.45rem;
+            padding: 0.7rem 1.15rem;
+            border-radius: 0.5rem;
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            min-height: 46px;
+            font-size: clamp(0.85rem, 2vw, 0.9rem);
         }
 
         .btn-danger-custom:hover {
@@ -524,28 +533,29 @@
             color: #ffffff;
         }
 
-        /* ---------- Live recorder ---------- */
+        /* ---------- Live Recorder ---------- */
         .recorder-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 1.75rem 1.5rem;
+            padding: clamp(1.25rem, 3vw, 1.75rem) 1rem;
             background: var(--bg-panel-raised);
             border: 1px solid var(--rule);
-            border-radius: 0.5rem;
+            border-radius: 0.6rem;
+            min-height: 230px;
         }
 
         .mic-pulse-ring {
-            width: 70px;
-            height: 70px;
+            width: clamp(64px, 14vw, 76px);
+            height: clamp(64px, 14vw, 76px);
             border-radius: 50%;
             background: var(--bg-panel);
-            border: 1.5px solid var(--ink-sage);
+            border: 2px solid var(--ink-sage);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.6rem;
+            font-size: clamp(1.4rem, 4vw, 1.75rem);
             color: var(--ink-sage);
             position: relative;
             transition: all 0.3s ease;
@@ -559,68 +569,73 @@
         }
 
         @keyframes pulseGlow {
-            0% {
-                box-shadow: 0 0 0 0 rgba(193, 88, 74, 0.45);
-            }
-
-            70% {
-                box-shadow: 0 0 0 16px rgba(193, 88, 74, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(193, 88, 74, 0);
-            }
+            0% { box-shadow: 0 0 0 0 rgba(193, 88, 74, 0.45); }
+            70% { box-shadow: 0 0 0 18px rgba(193, 88, 74, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(193, 88, 74, 0); }
         }
 
         .audio-wave-bars {
             display: flex;
             align-items: center;
-            gap: 3px;
-            height: 32px;
-            margin: 1.1rem 0;
+            justify-content: center;
+            gap: 4px;
+            height: 36px;
+            margin: 1rem 0;
+            width: 100%;
+            max-width: 240px;
         }
 
         .wave-bar {
-            width: 3px;
+            width: 4px;
             height: 8px;
             background: var(--ink-sage);
             border-radius: 2px;
-            transition: height 0.1s ease;
+            transition: height 0.08s ease;
         }
 
         .timer-display {
             font-family: var(--font-mono);
-            font-size: 1.3rem;
-            font-weight: 500;
+            font-size: clamp(1.25rem, 3.5vw, 1.45rem);
+            font-weight: 600;
             color: var(--text-primary);
             letter-spacing: 0.04em;
         }
 
-        /* ---------- Processing overlay ---------- */
+        .recorder-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ---------- Processing Modal / Step List ---------- */
         .processing-modal {
-            padding: 2.25rem;
+            padding: clamp(1.5rem, 4vw, 2.25rem) clamp(1rem, 3vw, 2rem);
             text-align: center;
         }
 
         .step-list {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.65rem;
             max-width: 440px;
-            margin: 1.5rem auto 0 auto;
+            margin: 1.25rem auto 0 auto;
             text-align: left;
         }
 
         .step-item {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            padding: 0.8rem 1.1rem;
+            gap: 0.85rem;
+            padding: 0.75rem 1rem;
             border-radius: 0.5rem;
             background: transparent;
             border: 1px solid var(--rule);
             color: var(--text-muted);
             transition: all 0.3s ease;
+            font-size: clamp(0.85rem, 2.2vw, 0.92rem);
         }
 
         .step-item.active {
@@ -642,9 +657,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             flex-shrink: 0;
             font-family: var(--font-mono);
+            font-weight: 600;
         }
 
         .step-item.active .step-icon {
@@ -662,47 +678,108 @@
             color: var(--text-muted);
         }
 
-        /* ---------- Results ---------- */
+        /* ---------- Results & Notes Cards ---------- */
         .results-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 1rem;
-            margin-bottom: 2rem;
-            padding-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
             border-bottom: 1px solid var(--rule);
         }
 
+        .results-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .results-actions-group {
+                width: auto;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .results-actions-group .btn-custom-primary,
+            .results-actions-group .btn-custom-secondary {
+                flex: 1 1 calc(50% - 0.25rem);
+                font-size: 0.85rem;
+                padding: 0.65rem 0.75rem;
+            }
+            .results-actions-group #downloadDocxBtn {
+                flex: 1 1 100%; /* Full width primary download button on mobile */
+            }
+        }
+
+        /* Mobile Quick Category Navigator (Horizontal Scroll Pills) */
+        .quick-nav-container {
+            display: flex;
+            gap: 0.4rem;
+            overflow-x: auto;
+            padding: 0.25rem 0 0.85rem 0;
+            margin-bottom: 1.25rem;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .quick-nav-container::-webkit-scrollbar {
+            display: none; /* Safari and Chrome */
+        }
+
+        .quick-nav-pill {
+            font-family: var(--font-mono);
+            font-size: 0.74rem;
+            white-space: nowrap;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            background: var(--bg-panel-raised);
+            border: 1px solid var(--rule);
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .quick-nav-pill:hover,
+        .quick-nav-pill:active {
+            color: var(--ink-amber);
+            border-color: var(--ink-amber);
+            background: var(--ink-amber-soft);
+        }
+
         .note-card {
-            padding: 1.5rem;
+            padding: clamp(1.15rem, 3vw, 1.5rem);
             height: 100%;
             display: flex;
             flex-direction: column;
             border-top: 2px solid var(--ink-amber);
-            border-radius: 0.4rem;
-        }
-
-        .note-card:hover {
-            transform: translateY(-2px);
+            border-radius: 0.6rem;
         }
 
         .note-card-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
+            margin-bottom: 0.85rem;
+            padding-bottom: 0.65rem;
             border-bottom: 1px solid var(--rule);
+            gap: 0.5rem;
         }
 
         .note-card-title {
-            font-size: 1rem;
+            font-size: clamp(0.92rem, 2.2vw, 1rem);
             font-weight: 600;
             color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.45rem;
             margin: 0;
             font-family: var(--font-body);
         }
@@ -712,14 +789,15 @@
         }
 
         .note-card-body {
-            font-size: 0.94rem;
+            font-size: clamp(0.88rem, 2vw, 0.94rem);
             color: var(--text-secondary);
             line-height: 1.65;
             flex-grow: 1;
+            word-break: break-word;
         }
 
         .note-card-body h5 {
-            font-size: 0.9rem;
+            font-size: clamp(0.85rem, 2vw, 0.9rem);
             font-weight: 600;
             color: var(--ink-sage);
             margin-top: 0.75rem;
@@ -727,7 +805,7 @@
         }
 
         .note-card-body ul {
-            padding-left: 1.2rem;
+            padding-left: 1.15rem;
             margin-bottom: 0.5rem;
         }
 
@@ -744,107 +822,93 @@
             border: 1px solid var(--rule-strong);
             color: var(--text-secondary);
             border-radius: 0.4rem;
-            padding: 0.25rem 0.6rem;
-            font-size: 0.78rem;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.75rem;
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            min-height: 32px;
+            cursor: pointer;
         }
 
-        .btn-copy-sm:hover {
+        .btn-copy-sm:hover,
+        .btn-copy-sm:active {
             color: var(--ink-amber);
             border-color: var(--ink-amber);
+            background: rgba(217, 164, 65, 0.08);
         }
 
-        /* ---------- Utility color classes referenced by existing JS (kept, retheme only) ---------- */
-        .text-emerald {
-            color: var(--ink-amber) !important;
-        }
-
-        .text-cyan {
-            color: var(--ink-sage) !important;
-        }
-
+        /* ---------- Utility Classes ---------- */
+        .text-emerald { color: var(--ink-amber) !important; }
+        .text-cyan { color: var(--ink-sage) !important; }
         .alert-danger {
             background: var(--ink-clay-soft) !important;
             border-color: rgba(193, 88, 74, 0.4) !important;
             color: #e8a89f !important;
+            padding: 1rem;
+            border-radius: 0.5rem;
         }
+        .badge.bg-success { background: var(--ink-sage-soft) !important; }
+        .text-success { color: var(--ink-sage) !important; }
+        .border-success { border-color: rgba(134, 166, 141, 0.4) !important; }
+        .text-danger { color: #e29289 !important; }
+        .spinner-border.text-emerald { color: var(--ink-amber) !important; }
 
-        .badge.bg-success {
-            background: var(--ink-sage-soft) !important;
-        }
-
-        .text-success {
-            color: var(--ink-sage) !important;
-        }
-
-        .border-success {
-            border-color: rgba(134, 166, 141, 0.4) !important;
-        }
-
-        .text-danger {
-            color: #e29289 !important;
-        }
-
-        .spinner-border.text-emerald {
-            color: var(--ink-amber) !important;
-        }
-
-        /* ---------- Toasts ---------- */
+        /* ---------- Toast Notifications (Centered on Mobile) ---------- */
         .toast-container-custom {
             position: fixed;
-            bottom: 2rem;
-            right: 2rem;
+            bottom: calc(1.5rem + var(--safe-bottom));
+            right: 1.5rem;
             z-index: 1080;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        @media (max-width: 576px) {
+            .toast-container-custom {
+                left: 1rem;
+                right: 1rem;
+                bottom: calc(1rem + var(--safe-bottom));
+                align-items: center;
+            }
         }
 
         .custom-toast {
             background: var(--bg-panel-raised);
             border: 1px solid var(--ink-amber);
             color: var(--text-primary);
-            padding: 0.85rem 1.3rem;
+            padding: 0.75rem 1.15rem;
             border-radius: 0.5rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.65rem;
             animation: slideUp 0.3s ease forwards;
-            font-size: 0.9rem;
+            font-size: clamp(0.82rem, 2vw, 0.88rem);
+            pointer-events: auto;
+            max-width: 90vw;
         }
 
         @keyframes slideUp {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        .hidden {
-            display: none !important;
-        }
+        .hidden { display: none !important; }
 
         .fade-in-up {
-            animation: fadeInUp 0.5s ease forwards;
+            animation: fadeInUp 0.4s ease forwards;
         }
 
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(16px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @media (prefers-reduced-motion: reduce) {
-
             .fade-in-up,
             .mic-pulse-ring.recording,
             .custom-toast {
@@ -866,62 +930,44 @@
                         <span class="brand-name">THERAPYNOTES&nbsp;AI</span>
                     </div>
 
-                    <span class="eyebrow">Clinical documentation, generated from the session itself</span>
+                    <span class="eyebrow">Clinical documentation from session audio</span>
                     <h1 class="hero-title mt-2">From session audio to a finished clinical note.</h1>
-                    <p class="hero-sub">Upload or record a session. TherapyNotes AI transcribes it, checks its own
-                        output against the transcript, and hands back a structured, audit-ready document.</p>
+                    <p class="hero-sub">Upload or record a therapy session on any device. TherapyNotes AI transcribes it with verbatim fidelity, validates clinical accuracy, and generates structured, audit-ready reports.</p>
 
-                    <!-- Signature graphic: waveform resolving into ruled note lines -->
-                    <svg class="signature-graphic" viewBox="0 0 620 90" xmlns="http://www.w3.org/2000/svg" role="img"
+                    <!-- Waveform signature graphic -->
+                    <svg class="signature-graphic d-none d-sm-block" viewBox="0 0 620 90" xmlns="http://www.w3.org/2000/svg" role="img"
                         aria-label="Audio waveform resolving into ruled note lines">
                         <g>
-                            <rect class="signature-bar" x="0" y="38" width="5" height="14" rx="2"
-                                style="animation-delay:0.02s; transform-origin:0px 45px" />
-                            <rect class="signature-bar" x="10" y="28" width="5" height="34" rx="2"
-                                style="animation-delay:0.05s; transform-origin:12.5px 45px" />
-                            <rect class="signature-bar" x="20" y="18" width="5" height="54" rx="2"
-                                style="animation-delay:0.08s; transform-origin:22.5px 45px" />
-                            <rect class="signature-bar" x="30" y="30" width="5" height="30" rx="2"
-                                style="animation-delay:0.11s; transform-origin:32.5px 45px" />
-                            <rect class="signature-bar" x="40" y="10" width="5" height="70" rx="2"
-                                style="animation-delay:0.14s; transform-origin:42.5px 45px" />
-                            <rect class="signature-bar" x="50" y="24" width="5" height="42" rx="2"
-                                style="animation-delay:0.17s; transform-origin:52.5px 45px" />
-                            <rect class="signature-bar" x="60" y="34" width="5" height="22" rx="2"
-                                style="animation-delay:0.2s; transform-origin:62.5px 45px" />
-                            <rect class="signature-bar" x="70" y="16" width="5" height="58" rx="2"
-                                style="animation-delay:0.23s; transform-origin:72.5px 45px" />
-                            <rect class="signature-bar" x="80" y="32" width="5" height="26" rx="2"
-                                style="animation-delay:0.26s; transform-origin:82.5px 45px" />
-                            <rect class="signature-bar" x="90" y="22" width="5" height="46" rx="2"
-                                style="animation-delay:0.29s; transform-origin:92.5px 45px" />
-                            <rect class="signature-bar" x="100" y="36" width="5" height="18" rx="2"
-                                style="animation-delay:0.32s; transform-origin:102.5px 45px" />
-                            <rect class="signature-bar" x="110" y="40" width="5" height="10" rx="2"
-                                style="animation-delay:0.35s; transform-origin:112.5px 45px" />
+                            <rect class="signature-bar" x="0" y="38" width="5" height="14" rx="2" />
+                            <rect class="signature-bar" x="10" y="28" width="5" height="34" rx="2" />
+                            <rect class="signature-bar" x="20" y="18" width="5" height="54" rx="2" />
+                            <rect class="signature-bar" x="30" y="30" width="5" height="30" rx="2" />
+                            <rect class="signature-bar" x="40" y="10" width="5" height="70" rx="2" />
+                            <rect class="signature-bar" x="50" y="24" width="5" height="42" rx="2" />
+                            <rect class="signature-bar" x="60" y="34" width="5" height="22" rx="2" />
+                            <rect class="signature-bar" x="70" y="16" width="5" height="58" rx="2" />
+                            <rect class="signature-bar" x="80" y="32" width="5" height="26" rx="2" />
+                            <rect class="signature-bar" x="90" y="22" width="5" height="46" rx="2" />
+                            <rect class="signature-bar" x="100" y="36" width="5" height="18" rx="2" />
+                            <rect class="signature-bar" x="110" y="40" width="5" height="10" rx="2" />
                         </g>
                         <g>
-                            <line class="signature-line" x1="150" y1="20" x2="600" y2="20"
-                                style="animation-delay:0.4s" />
-                            <line class="signature-line" x1="150" y1="35" x2="600" y2="35"
-                                style="animation-delay:0.46s" />
-                            <line class="signature-line short" x1="150" y1="50" x2="480" y2="50"
-                                style="animation-delay:0.52s" />
-                            <line class="signature-line" x1="150" y1="65" x2="600" y2="65"
-                                style="animation-delay:0.58s" />
-                            <line class="signature-line short" x1="150" y1="80" x2="410" y2="80"
-                                style="animation-delay:0.64s" />
+                            <line class="signature-line" x1="150" y1="20" x2="600" y2="20" />
+                            <line class="signature-line" x1="150" y1="35" x2="600" y2="35" />
+                            <line class="signature-line short" x1="150" y1="50" x2="480" y2="50" />
+                            <line class="signature-line" x1="150" y1="65" x2="600" y2="65" />
+                            <line class="signature-line short" x1="150" y1="80" x2="410" y2="80" />
                         </g>
                     </svg>
 
                     <div class="engine-row">
                         <div class="engine-badge whisper">
                             <span class="badge-icon"></span>
-                            <span>Transcription: <strong>Crisper-Whisper Turbo</strong></span>
+                            <span>Speech Recognition: <strong>Crisper-Whisper / Gemini</strong></span>
                         </div>
                         <div class="engine-badge gemini">
                             <span class="badge-icon"></span>
-                            <span>Note synthesis: <strong>Google Gemini</strong></span>
+                            <span>Clinical Synthesis: <strong>Gemma 4 31B IT</strong></span>
                         </div>
                     </div>
                 </div>
@@ -929,8 +975,7 @@
                 <div class="hero-preview">
                     <div class="preview-card">
                         <div class="preview-card-head">
-                            <span class="eyebrow" style="font-size: 0.66rem; color: var(--ink-sage);">Generated &middot;
-                                Session 04</span>
+                            <span class="eyebrow" style="font-size: 0.66rem; color: var(--ink-sage);">Clinical Report</span>
                             <span class="preview-check"><i class="bi bi-shield-check"></i>Validated</span>
                         </div>
                         <h5 class="preview-title">Session Overview</h5>
@@ -941,7 +986,7 @@
                         </div>
                         <div class="preview-tags">
                             <span class="preview-tag">CBT</span>
-                            <span class="preview-tag">Motivational Interviewing</span>
+                            <span class="preview-tag">Grounding</span>
                         </div>
                         <div class="preview-lines">
                             <span class="pline w-80"></span>
@@ -950,7 +995,7 @@
                         <hr class="preview-divider">
                         <div class="preview-footer">
                             <i class="bi bi-file-earmark-word"></i>
-                            <span>therapy_notes_session04.docx</span>
+                            <span>clinical_therapy_notes.docx</span>
                         </div>
                     </div>
                 </div>
@@ -960,80 +1005,96 @@
 
     <main class="container">
         <!-- Input Options Section -->
-        <div id="inputSection" class="row g-4 justify-content-center mb-5 fade-in-up">
+        <div id="inputSection" class="mb-5 fade-in-up">
 
-            <!-- Option A: File Upload -->
-            <div class="col-lg-6">
-                <div class="panel input-card h-100">
-                    <div class="section-title">
-                        <i class="bi bi-cloud-arrow-up-fill"></i>
-                        <span>Upload a session recording</span>
-                    </div>
-
-                    <form id="audioUploadForm">
-                        <div class="dropzone mb-3" id="dropzone">
-                            <input type="file" id="audioFile" class="hidden" accept=".wav,.mp3,.m4a,.flac" required>
-                            <i class="bi bi-file-earmark-music dropzone-icon" id="dropzoneIcon"></i>
-                            <h5 class="fw-semibold mb-1" style="color: var(--text-primary);" id="dropzonePrimaryText">
-                                Drag &amp; drop an audio file here</h5>
-                            <p class="text-muted small mb-0" id="dropzoneSubText"
-                                style="color: var(--text-muted) !important;">WAV, MP3, M4A, or FLAC &middot; up to 500MB
-                            </p>
-                            <div id="selectedFileInfo" class="mt-2 hidden">
-                                <span
-                                    class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-3 py-2 fs-6"
-                                    id="fileNameBadge" style="font-family: var(--font-mono); font-weight: 500;">
-                                    <i class="bi bi-music-note-beamed me-1"></i> <span id="fileNameText">file.mp3</span>
-                                </span>
-                                <button type="button" class="btn btn-sm text-danger ms-2" id="clearFileBtn"><i
-                                        class="bi bi-x-lg"></i></button>
-                            </div>
-                        </div>
-
-                        <button type="submit" id="submitUploadBtn" class="btn-custom-primary w-100" disabled>
-                            <i class="bi bi-magic me-1"></i> Generate clinical notes
-                        </button>
-                    </form>
+            <!-- Segmented Mode Control (Mobile / Tablet / Desktop Switcher) -->
+            <div class="mode-switcher-container">
+                <div class="segmented-control" role="tablist" aria-label="Input Mode Selector">
+                    <button type="button" id="tabUploadBtn" class="segmented-btn active" role="tab" aria-selected="true" aria-controls="uploadPanel">
+                        <i class="bi bi-cloud-arrow-up-fill"></i> Upload Audio File
+                    </button>
+                    <button type="button" id="tabRecordBtn" class="segmented-btn" role="tab" aria-selected="false" aria-controls="recordPanel">
+                        <i class="bi bi-mic-fill"></i> Record Live Session
+                    </button>
                 </div>
             </div>
 
-            <!-- Option B: Live Audio Recording -->
-            <div class="col-lg-6">
-                <div class="panel input-card h-100">
-                    <div class="section-title">
-                        <i class="bi bi-mic-fill"></i>
-                        <span>Record live</span>
+            <!-- Input Cards Container (Responsive Grid / Tab Switching) -->
+            <div class="row g-4 justify-content-center">
+
+                <!-- Option A: File Upload Panel -->
+                <div class="col-12 col-lg-6" id="uploadPanel">
+                    <div class="panel input-card h-100">
+                        <div class="section-title">
+                            <i class="bi bi-cloud-arrow-up-fill"></i>
+                            <span>Upload a session recording</span>
+                        </div>
+
+                        <form id="audioUploadForm">
+                            <div class="dropzone mb-3" id="dropzone">
+                                <input type="file" id="audioFile" class="hidden" accept=".wav,.mp3,.m4a,.flac,.webm,.ogg,.mp4,.opus" required>
+                                <i class="bi bi-file-earmark-music dropzone-icon" id="dropzoneIcon"></i>
+                                <h5 class="fw-semibold mb-1" style="color: var(--text-primary);" id="dropzonePrimaryText">
+                                    Tap or drop audio file here</h5>
+                                <p class="text-muted small mb-0" id="dropzoneSubText"
+                                    style="color: var(--text-muted) !important;">WAV, MP3, M4A, WebM, OGG &middot; up to 50MB
+                                </p>
+                                <div id="selectedFileInfo" class="mt-2 hidden">
+                                    <span
+                                        class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-25 px-3 py-2 fs-6 text-wrap"
+                                        id="fileNameBadge" style="font-family: var(--font-mono); font-weight: 500; max-width: 100%; word-break: break-all;">
+                                        <i class="bi bi-music-note-beamed me-1"></i> <span id="fileNameText">file.mp3</span>
+                                    </span>
+                                    <button type="button" class="btn btn-sm text-danger ms-1" id="clearFileBtn" aria-label="Remove selected file"><i
+                                            class="bi bi-x-lg"></i></button>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="submitUploadBtn" class="btn-custom-primary w-100" disabled>
+                                <i class="bi bi-magic me-1"></i> Generate clinical notes
+                            </button>
+                        </form>
                     </div>
+                </div>
 
-                    <div class="recorder-container h-100 justify-content-between">
-                        <div class="mic-pulse-ring my-2" id="micPulseRing">
-                            <i class="bi bi-mic-fill" id="micIcon"></i>
+                <!-- Option B: Live Audio Recording Panel -->
+                <div class="col-12 col-lg-6" id="recordPanel">
+                    <div class="panel input-card h-100">
+                        <div class="section-title">
+                            <i class="bi bi-mic-fill"></i>
+                            <span>Record live session</span>
                         </div>
 
-                        <div class="audio-wave-bars" id="waveBars">
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                        </div>
+                        <div class="recorder-container h-100 justify-content-between">
+                            <div class="mic-pulse-ring my-2" id="micPulseRing" role="status" aria-label="Microphone Status">
+                                <i class="bi bi-mic-fill" id="micIcon"></i>
+                            </div>
 
-                        <div class="timer-display mb-3" id="timerDisplay">00:00</div>
+                            <div class="audio-wave-bars" id="waveBars" aria-hidden="true">
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                                <div class="wave-bar"></div>
+                            </div>
 
-                        <div class="d-flex align-items-center gap-2 w-100 justify-content-center">
-                            <button type="button" id="startRecBtn" class="btn-custom-primary px-4">
-                                <i class="bi bi-record-circle me-1"></i> Start recording
-                            </button>
-                            <button type="button" id="stopRecBtn"
-                                class="btn-custom-primary bg-danger border-danger px-4 hidden">
-                                <i class="bi bi-stop-circle me-1"></i> Stop &amp; process
-                            </button>
-                            <button type="button" id="cancelRecBtn" class="btn-danger-custom hidden">
-                                <i class="bi bi-x-circle me-1"></i> Cancel
-                            </button>
+                            <div class="timer-display mb-3" id="timerDisplay">00:00</div>
+
+                            <div class="recorder-actions">
+                                <button type="button" id="startRecBtn" class="btn-custom-primary w-100 w-sm-auto px-4">
+                                    <i class="bi bi-record-circle me-1"></i> Start recording
+                                </button>
+                                <button type="button" id="stopRecBtn"
+                                    class="btn-custom-primary bg-danger border-danger w-100 w-sm-auto px-4 hidden">
+                                    <i class="bi bi-stop-circle me-1"></i> Stop &amp; process
+                                </button>
+                                <button type="button" id="cancelRecBtn" class="btn-danger-custom w-100 w-sm-auto hidden">
+                                    <i class="bi bi-x-circle me-1"></i> Cancel
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1046,38 +1107,36 @@
             <div class="spinner-border text-emerald mb-3" style="width: 2.75rem; height: 2.75rem;" role="status">
                 <span class="visually-hidden">Processing...</span>
             </div>
-            <h3 class="mb-1" style="font-size: 1.4rem;">Synthesizing therapy notes</h3>
-            <p class="small mb-4" style="color: var(--text-secondary);">Your session audio is moving through the
-                clinical pipeline below.</p>
+            <h3 class="mb-1" style="font-size: clamp(1.2rem, 3vw, 1.45rem);">Synthesizing therapy notes</h3>
+            <p class="small mb-4" style="color: var(--text-secondary);">Your session audio is moving through the clinical pipeline below.</p>
 
             <div class="step-list">
                 <div class="step-item active" id="step1">
                     <div class="step-icon">01</div>
                     <div>
                         <div class="fw-semibold">Verbatim audio transcription</div>
-                        <div class="small opacity-75">Transcribing verbatim speech with Crisper-Whisper Turbo&hellip;</div>
+                        <div class="small opacity-75">Transcribing clinical speech verbatim&hellip;</div>
                     </div>
                 </div>
                 <div class="step-item pending" id="step2">
                     <div class="step-icon">02</div>
                     <div>
                         <div class="fw-semibold">Medical grammar &amp; terminology</div>
-                        <div class="small opacity-75">Correcting medical terms &amp; bilingual context&hellip;</div>
+                        <div class="small opacity-75">Refining clinical terms &amp; context&hellip;</div>
                     </div>
                 </div>
                 <div class="step-item pending" id="step3">
                     <div class="step-icon">03</div>
                     <div>
                         <div class="fw-semibold">Clinical note synthesis</div>
-                        <div class="small opacity-75">Extracting goals, interventions &amp; concerns with Gemini&hellip;
-                        </div>
+                        <div class="small opacity-75">Extracting interventions &amp; goals with Gemma 4 31B IT&hellip;</div>
                     </div>
                 </div>
                 <div class="step-item pending" id="step4">
                     <div class="step-icon">04</div>
                     <div>
                         <div class="fw-semibold">Document generation</div>
-                        <div class="small opacity-75">Building the formatted clinical report&hellip;</div>
+                        <div class="small opacity-75">Building formatted Word (.docx) report&hellip;</div>
                     </div>
                 </div>
             </div>
@@ -1091,9 +1150,9 @@
             <div class="results-header">
                 <div>
                     <span class="eyebrow">Session complete</span>
-                    <h2 class="mb-0 mt-1" style="font-size: 1.6rem;">Clinical session notes</h2>
+                    <h2 class="mb-0 mt-1" style="font-size: clamp(1.35rem, 3.5vw, 1.65rem);">Clinical session notes</h2>
                 </div>
-                <div class="d-flex align-items-center gap-2">
+                <div class="results-actions-group">
                     <button type="button" id="downloadDocxBtn" class="btn-custom-primary">
                         <i class="bi bi-download"></i> Download .docx
                     </button>
@@ -1106,10 +1165,22 @@
                 </div>
             </div>
 
+            <!-- Quick Section Jump Bar for Mobile -->
+            <div class="quick-nav-container" aria-label="Jump to note section">
+                <a href="#card_session_overview" class="quick-nav-pill"><i class="bi bi-clipboard-pulse"></i> Overview</a>
+                <a href="#card_client_concerns" class="quick-nav-pill"><i class="bi bi-person-exclamation"></i> Concerns</a>
+                <a href="#card_goals_and_progress" class="quick-nav-pill"><i class="bi bi-trophy"></i> Goals</a>
+                <a href="#card_therapeutic_interventions" class="quick-nav-pill"><i class="bi bi-bandaid"></i> Interventions</a>
+                <a href="#card_clients_response" class="quick-nav-pill"><i class="bi bi-chat-quote"></i> Response</a>
+                <a href="#card_challenges" class="quick-nav-pill"><i class="bi bi-lightning-charge"></i> Challenges</a>
+                <a href="#card_homework_plan" class="quick-nav-pill"><i class="bi bi-journal-check"></i> Homework</a>
+                <a href="#card_next_session_prompts" class="quick-nav-pill"><i class="bi bi-lightbulb"></i> Next Session</a>
+            </div>
+
             <!-- Grid of 8 Note Sections -->
-            <div class="row g-4">
+            <div class="row g-3 g-md-4">
                 <!-- Section 1: Session Overview -->
-                <div class="col-md-6 col-lg-6">
+                <div class="col-12 col-md-6">
                     <div class="panel note-card">
                         <div class="note-card-header">
                             <h4 class="note-card-title"><i class="bi bi-clipboard-pulse"></i> Session overview</h4>
@@ -1121,7 +1192,7 @@
                 </div>
 
                 <!-- Section 2: Client Concerns -->
-                <div class="col-md-6 col-lg-6">
+                <div class="col-12 col-md-6">
                     <div class="panel note-card">
                         <div class="note-card-header">
                             <h4 class="note-card-title"><i class="bi bi-person-exclamation"></i> Client concerns</h4>
@@ -1133,7 +1204,7 @@
                 </div>
 
                 <!-- Section 3: Goals & Progress -->
-                <div class="col-md-6 col-lg-6">
+                <div class="col-12 col-md-6">
                     <div class="panel note-card">
                         <div class="note-card-header">
                             <h4 class="note-card-title"><i class="bi bi-trophy"></i> Goals &amp; progress</h4>
@@ -1145,7 +1216,7 @@
                 </div>
 
                 <!-- Section 4: Therapeutic Interventions -->
-                <div class="col-md-6 col-lg-6">
+                <div class="col-12 col-md-6">
                     <div class="panel note-card">
                         <div class="note-card-header">
                             <h4 class="note-card-title"><i class="bi bi-bandaid"></i> Therapeutic interventions</h4>
@@ -1157,7 +1228,7 @@
                 </div>
 
                 <!-- Section 5: Client Response -->
-                <div class="col-md-6 col-lg-6">
+                <div class="col-12 col-md-6">
                     <div class="panel note-card">
                         <div class="note-card-header">
                             <h4 class="note-card-title"><i class="bi bi-chat-quote"></i> Client response</h4>
@@ -1169,11 +1240,10 @@
                 </div>
 
                 <!-- Section 6: Challenges -->
-                <div class="col-md-6 col-lg-6">
+                <div class="col-12 col-md-6">
                     <div class="panel note-card">
                         <div class="note-card-header">
-                            <h4 class="note-card-title"><i class="bi bi-lightning-charge"></i> Challenges &amp; barriers
-                            </h4>
+                            <h4 class="note-card-title"><i class="bi bi-lightning-charge"></i> Challenges &amp; barriers</h4>
                             <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
                                     class="bi bi-copy"></i> Copy</button>
                         </div>
@@ -1182,11 +1252,10 @@
                 </div>
 
                 <!-- Section 7: Homework Plan -->
-                <div class="col-md-6 col-lg-6">
+                <div class="col-12 col-md-6">
                     <div class="panel note-card">
                         <div class="note-card-header">
-                            <h4 class="note-card-title"><i class="bi bi-journal-check"></i> Homework &amp; action plan
-                            </h4>
+                            <h4 class="note-card-title"><i class="bi bi-journal-check"></i> Homework &amp; action plan</h4>
                             <button type="button" class="btn-copy-sm" onclick="copyCardText(this)"><i
                                     class="bi bi-copy"></i> Copy</button>
                         </div>
@@ -1195,7 +1264,7 @@
                 </div>
 
                 <!-- Section 8: Next Session Prompts -->
-                <div class="col-md-6 col-lg-6">
+                <div class="col-12 col-md-6">
                     <div class="panel note-card">
                         <div class="note-card-header">
                             <h4 class="note-card-title"><i class="bi bi-lightbulb"></i> Next session prompts</h4>
@@ -1210,12 +1279,12 @@
     </main>
 
     <!-- Toast Notifications Container -->
-    <div id="toastContainer" class="toast-container-custom"></div>
+    <div id="toastContainer" class="toast-container-custom" aria-live="polite"></div>
 
     <!-- Bootstrap 5.3 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Global variables for recording & state
+        // Global state
         let mediaRecorder = null;
         let audioChunks = [];
         let recInterval = null;
@@ -1237,7 +1306,7 @@
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.3s ease';
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, 3200);
         }
 
         // Error display
@@ -1329,7 +1398,6 @@
         }
 
         // Processing Pipeline State Simulation
-        let stepTimer = null;
         function startProcessingUI() {
             showError(null);
             document.getElementById('inputSection').classList.add('hidden');
@@ -1395,6 +1463,48 @@
 
         // DOM Ready Initializations
         document.addEventListener('DOMContentLoaded', () => {
+            // Mode Switcher (Upload vs Record Tabs)
+            const tabUploadBtn = document.getElementById('tabUploadBtn');
+            const tabRecordBtn = document.getElementById('tabRecordBtn');
+            const uploadPanel = document.getElementById('uploadPanel');
+            const recordPanel = document.getElementById('recordPanel');
+
+            function updateTabVisibility() {
+                const isMobile = window.innerWidth < 992;
+                if (isMobile) {
+                    if (tabUploadBtn.classList.contains('active')) {
+                        uploadPanel.classList.remove('d-none');
+                        recordPanel.classList.add('d-none');
+                    } else {
+                        uploadPanel.classList.add('d-none');
+                        recordPanel.classList.remove('d-none');
+                    }
+                } else {
+                    // On large desktop displays, show both side-by-side
+                    uploadPanel.classList.remove('d-none');
+                    recordPanel.classList.remove('d-none');
+                }
+            }
+
+            tabUploadBtn.addEventListener('click', () => {
+                tabUploadBtn.classList.add('active');
+                tabUploadBtn.setAttribute('aria-selected', 'true');
+                tabRecordBtn.classList.remove('active');
+                tabRecordBtn.setAttribute('aria-selected', 'false');
+                updateTabVisibility();
+            });
+
+            tabRecordBtn.addEventListener('click', () => {
+                tabRecordBtn.classList.add('active');
+                tabRecordBtn.setAttribute('aria-selected', 'true');
+                tabUploadBtn.classList.remove('active');
+                tabUploadBtn.setAttribute('aria-selected', 'false');
+                updateTabVisibility();
+            });
+
+            window.addEventListener('resize', updateTabVisibility);
+            updateTabVisibility();
+
             // Drag and Drop Upload logic
             const dropzone = document.getElementById('dropzone');
             const audioFileInput = document.getElementById('audioFile');
@@ -1467,7 +1577,7 @@
                 submitAudioPayload(formData);
             });
 
-            // Live Voice Recorder Logic
+            // Live Voice Recorder Logic (Optimized for iOS Safari, Android Chrome & Desktop)
             const startRecBtn = document.getElementById('startRecBtn');
             const stopRecBtn = document.getElementById('stopRecBtn');
             const cancelRecBtn = document.getElementById('cancelRecBtn');
@@ -1479,24 +1589,40 @@
             startRecBtn.addEventListener('click', async () => {
                 showError(null);
                 try {
-                    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-                    // Determine best supported MIME type
-                    let options = {};
-                    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                        options = { mimeType: 'audio/webm;codecs=opus' };
-                    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-                        options = { mimeType: 'audio/webm' };
-                    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                        options = { mimeType: 'audio/mp4' };
+                    // Unlock AudioContext on user gesture for mobile browsers
+                    const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtxClass) {
+                        if (!audioContext) audioContext = new AudioCtxClass();
+                        if (audioContext.state === 'suspended') {
+                            await audioContext.resume();
+                        }
                     }
 
-                    mediaRecorder = new MediaRecorder(mediaStream, options);
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            autoGainControl: true
+                        }
+                    });
+
+                    // Determine best supported MIME type across iOS Safari / Android Chrome / Desktop
+                    let mimeType = 'audio/webm';
+                    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                        mimeType = 'audio/webm;codecs=opus';
+                    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                        mimeType = 'audio/mp4'; // iOS Safari fallback
+                    } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+                        mimeType = 'audio/aac';
+                    } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+                        mimeType = 'audio/ogg;codecs=opus';
+                    }
+
+                    mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
                     audioChunks = [];
 
-                    // Setup Web Audio Analyser for Wave Visualizer
+                    // Setup Web Audio Analyser for Real-time Wave Visualizer
                     try {
-                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
                         const source = audioContext.createMediaStreamSource(mediaStream);
                         analyser = audioContext.createAnalyser();
                         analyser.fftSize = 32;
@@ -1516,7 +1642,7 @@
                         }
                         updateWaveVisualizer();
                     } catch (e) {
-                        console.warn('Web Audio visualizer setup skipped:', e);
+                        console.warn('Web Audio visualizer setup notice:', e);
                     }
 
                     mediaRecorder.ondataavailable = (event) => {
@@ -1528,7 +1654,7 @@
                     mediaRecorder.onstop = () => {
                         const recordedChunks = [...audioChunks];
                         const duration = recSeconds;
-                        const mime = mediaRecorder.mimeType || 'audio/webm';
+                        const finalMime = mediaRecorder.mimeType || mimeType;
                         cleanupRecording();
 
                         if (duration < 1 || recordedChunks.length === 0) {
@@ -1537,11 +1663,11 @@
                         }
 
                         let ext = 'webm';
-                        if (mime.includes('mp4')) ext = 'mp4';
-                        else if (mime.includes('ogg')) ext = 'ogg';
-                        else if (mime.includes('wav')) ext = 'wav';
+                        if (finalMime.includes('mp4') || finalMime.includes('aac')) ext = 'mp4';
+                        else if (finalMime.includes('ogg')) ext = 'ogg';
+                        else if (finalMime.includes('wav')) ext = 'wav';
 
-                        const audioBlob = new Blob(recordedChunks, { type: mime });
+                        const audioBlob = new Blob(recordedChunks, { type: finalMime });
                         const formData = new FormData();
                         formData.append('audio', audioBlob, `live_recording.${ext}`);
                         submitAudioPayload(formData);
@@ -1566,7 +1692,7 @@
 
                 } catch (err) {
                     console.error('Microphone error:', err);
-                    showError('Microphone access was denied or not supported by your browser.');
+                    showError('Microphone access was denied or is not supported by your browser/device settings.');
                 }
             });
 

@@ -1,0 +1,15 @@
+# Optional Local GPU / CrisperWhisper Speech Recognition Dependencies
+# Install these for on-premise or dedicated GPU execution:
+# pip install -r requirements-local.txt
+
+-r requirements.txt
+torch>=2.0.0
+torchaudio>=2.0.0
+transformers>=4.40.0
+crisperwhisper[transformers]
+accelerate>=0.28.0
+noisereduce>=3.0.0
+librosa>=0.10.0
+soundfile>=0.12.1
+scipy>=1.11.0
+ffmpeg-python>=0.2.0

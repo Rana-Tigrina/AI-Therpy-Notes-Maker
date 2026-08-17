@@ -67,12 +67,28 @@ def process_demo():
     Does NOT consume the user's custom upload limit, allowing unlimited test trials.
     """
     try:
-        demo_path = Path(__file__).resolve().parent / "static" / "demo.mp3"
-        if not demo_path.is_file():
-            # Fallback to local static path
-            demo_path = Path("static/demo.mp3")
+        # Locate demo audio file across common paths and case variations
+        candidate_paths = [
+            Path(__file__).resolve().parent / "static" / "demo.mp3",
+            Path(__file__).resolve().parent / "static" / "Demo.mp3",
+            Path("static/demo.mp3"),
+            Path("static/Demo.mp3"),
+            Path("demo.mp3"),
+        ]
+        demo_path = next((p for p in candidate_paths if p.is_file()), None)
 
-        if not demo_path.is_file():
+        if not demo_path:
+            # Fallback: scan static directory for any demo/sample mp3 file
+            static_dir = Path(__file__).resolve().parent / "static"
+            if not static_dir.is_dir():
+                static_dir = Path("static")
+            if static_dir.is_dir():
+                for f in static_dir.iterdir():
+                    if f.is_file() and f.suffix.lower() == ".mp3":
+                        demo_path = f
+                        break
+
+        if not demo_path or not demo_path.is_file():
             return jsonify({"error": "Demo audio file is missing on the server."}), 404
 
         unique_prefix = str(uuid.uuid4())

@@ -165,6 +165,9 @@ Click **Deploy**. Vercel will automatically build and deploy the Flask serverles
 | `FALLBACK_MODEL` | String | `gemini-2.5-flash` | Automatic fallback model used if primary models encounter 503/high-demand/rate limits |
 | `ASR_BACKEND` | String | `auto` | `auto` (detects local/cloud), `gemini` (cloud ASR), or `crisper_whisper` (local) |
 | `CRISPER_WHISPER_MODEL`| String | `small` | HuggingFace model tag or size for local CrisperWhisper |
+| `ENABLE_DEMO_LIMITS` | Boolean | `true` | When true, enforces max 60s audio duration and 2 custom uploads per session |
+| `MAX_AUDIO_DURATION_SEC` | Integer | `60` | Maximum audio duration in seconds for public testing |
+| `MAX_USER_UPLOADS` | Integer | `2` | Maximum custom audio files allowed per user session |
 | `STORAGE_DIR` | String | System temp (on Vercel) / `.` (local) | Runtime storage directory for uploads & generated files |
 | `LOG_LEVEL` | String | `INFO` | Logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 | `MAX_CONTENT_LENGTH` | Integer | `52428800` (50MB) | Maximum allowable upload file size in bytes |
@@ -173,8 +176,11 @@ Click **Deploy**. Vercel will automatically build and deploy the Flask serverles
 
 ## API Endpoints Reference
 
+### `POST /process_demo`
+Instantly processes the built-in 27-second sample therapy consultation (`static/demo.mp3`) without consuming custom upload quota.
+
 ### `POST /process_audio_file`
-Uploads an audio file, transcribes it, and synthesizes structured clinical notes.
+Uploads an audio file (up to 60 seconds), transcribes it, and synthesizes structured clinical notes.
 
 **Request**:
 - `multipart/form-data` with key `audio` containing the audio file (`.wav`, `.mp3`, `.m4a`, `.webm`, `.ogg`, `.mp4`).

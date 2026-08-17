@@ -209,7 +209,7 @@
                 transform: none;
             }
             .hero-preview {
-                display: none; /* Hide preview on mobile/tablet to keep immediate focus on recording/upload */
+                display: none;
             }
         }
 
@@ -290,29 +290,6 @@
             color: var(--ink-amber);
         }
 
-        .signature-graphic {
-            width: 100%;
-            height: auto;
-            margin-top: 1.5rem;
-            max-width: 520px;
-        }
-
-        .signature-bar {
-            fill: var(--ink-amber);
-            opacity: 0.85;
-        }
-
-        .signature-line {
-            stroke: var(--ink-sage);
-            stroke-width: 2;
-            stroke-linecap: round;
-            opacity: 0.55;
-        }
-
-        .signature-line.short {
-            opacity: 0.32;
-        }
-
         /* Engine status badges */
         .engine-row {
             display: flex;
@@ -356,9 +333,49 @@
             font-weight: 600;
         }
 
+        /* ---------- Demo Callout Card ---------- */
+        .demo-banner-card {
+            background: linear-gradient(145deg, rgba(217, 164, 65, 0.12), rgba(36, 31, 23, 0.85));
+            border: 1px solid rgba(217, 164, 65, 0.35);
+            border-radius: 0.75rem;
+            padding: clamp(1rem, 2.5vw, 1.25rem);
+            margin-bottom: 1.5rem;
+        }
+
+        .demo-icon-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--ink-amber-soft);
+            border: 1.5px solid var(--ink-amber);
+            color: var(--ink-amber);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+            flex-shrink: 0;
+        }
+
+        .quota-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            background: var(--bg-panel-raised);
+            border: 1px solid var(--rule-strong);
+            font-family: var(--font-mono);
+            font-size: clamp(0.72rem, 2vw, 0.8rem);
+            color: var(--text-secondary);
+        }
+
+        .quota-badge strong {
+            color: var(--ink-amber);
+        }
+
         /* ---------- Segmented Mode Switcher (Mobile & Tablet) ---------- */
         .mode-switcher-container {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.25rem;
         }
 
         .segmented-control {
@@ -385,7 +402,7 @@
             border-radius: 0.45rem;
             cursor: pointer;
             transition: all 0.2s ease;
-            min-height: 44px; /* Apple/Google minimum touch target */
+            min-height: 44px;
         }
 
         .segmented-btn.active {
@@ -460,7 +477,7 @@
             justify-content: center;
             gap: 0.5rem;
             font-size: clamp(0.88rem, 2.2vw, 0.95rem);
-            min-height: 46px; /* Touch target */
+            min-height: 46px;
             cursor: pointer;
             text-decoration: none;
         }
@@ -712,11 +729,10 @@
                 padding: 0.65rem 0.75rem;
             }
             .results-actions-group #downloadDocxBtn {
-                flex: 1 1 100%; /* Full width primary download button on mobile */
+                flex: 1 1 100%;
             }
         }
 
-        /* Mobile Quick Category Navigator (Horizontal Scroll Pills) */
         .quick-nav-container {
             display: flex;
             gap: 0.4rem;
@@ -724,11 +740,11 @@
             padding: 0.25rem 0 0.85rem 0;
             margin-bottom: 1.25rem;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none;
         }
 
         .quick-nav-container::-webkit-scrollbar {
-            display: none; /* Safari and Chrome */
+            display: none;
         }
 
         .quick-nav-pill {
@@ -934,32 +950,6 @@
                     <h1 class="hero-title mt-2">From session audio to a finished clinical note.</h1>
                     <p class="hero-sub">Upload or record a therapy session on any device. TherapyNotes AI transcribes it with verbatim fidelity, validates clinical accuracy, and generates structured, audit-ready reports.</p>
 
-                    <!-- Waveform signature graphic -->
-                    <svg class="signature-graphic d-none d-sm-block" viewBox="0 0 620 90" xmlns="http://www.w3.org/2000/svg" role="img"
-                        aria-label="Audio waveform resolving into ruled note lines">
-                        <g>
-                            <rect class="signature-bar" x="0" y="38" width="5" height="14" rx="2" />
-                            <rect class="signature-bar" x="10" y="28" width="5" height="34" rx="2" />
-                            <rect class="signature-bar" x="20" y="18" width="5" height="54" rx="2" />
-                            <rect class="signature-bar" x="30" y="30" width="5" height="30" rx="2" />
-                            <rect class="signature-bar" x="40" y="10" width="5" height="70" rx="2" />
-                            <rect class="signature-bar" x="50" y="24" width="5" height="42" rx="2" />
-                            <rect class="signature-bar" x="60" y="34" width="5" height="22" rx="2" />
-                            <rect class="signature-bar" x="70" y="16" width="5" height="58" rx="2" />
-                            <rect class="signature-bar" x="80" y="32" width="5" height="26" rx="2" />
-                            <rect class="signature-bar" x="90" y="22" width="5" height="46" rx="2" />
-                            <rect class="signature-bar" x="100" y="36" width="5" height="18" rx="2" />
-                            <rect class="signature-bar" x="110" y="40" width="5" height="10" rx="2" />
-                        </g>
-                        <g>
-                            <line class="signature-line" x1="150" y1="20" x2="600" y2="20" />
-                            <line class="signature-line" x1="150" y1="35" x2="600" y2="35" />
-                            <line class="signature-line short" x1="150" y1="50" x2="480" y2="50" />
-                            <line class="signature-line" x1="150" y1="65" x2="600" y2="65" />
-                            <line class="signature-line short" x1="150" y1="80" x2="410" y2="80" />
-                        </g>
-                    </svg>
-
                     <div class="engine-row">
                         <div class="engine-badge whisper">
                             <span class="badge-icon"></span>
@@ -1007,6 +997,29 @@
         <!-- Input Options Section -->
         <div id="inputSection" class="mb-5 fade-in-up">
 
+            <!-- Demo Banner Card -->
+            <div class="demo-banner-card panel d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3 w-100">
+                    <div class="demo-icon-badge"><i class="bi bi-play-circle-fill"></i></div>
+                    <div>
+                        <div class="fw-semibold text-primary" style="font-size: 0.96rem;">Quick Demo Session Available</div>
+                        <div class="small text-secondary">Test the pipeline instantly with a pre-loaded 27s CBT consultation audio — free and unlimited.</div>
+                    </div>
+                </div>
+                <button type="button" id="tryDemoBtn" class="btn-custom-primary text-nowrap w-100 w-md-auto">
+                    <i class="bi bi-headphones"></i> Try Demo Session
+                </button>
+            </div>
+
+            <!-- Quota & Rate Limit Badge -->
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div class="quota-badge" id="quotaBadge">
+                    <i class="bi bi-shield-lock-fill text-emerald"></i>
+                    <span>Credits Remaining: <strong id="creditsCount">2/2</strong> custom uploads (max 60s each)</span>
+                </div>
+                <div class="small text-muted fst-italic">Rate limited for public trial</div>
+            </div>
+
             <!-- Segmented Mode Control (Mobile / Tablet / Desktop Switcher) -->
             <div class="mode-switcher-container">
                 <div class="segmented-control" role="tablist" aria-label="Input Mode Selector">
@@ -1027,7 +1040,7 @@
                     <div class="panel input-card h-100">
                         <div class="section-title">
                             <i class="bi bi-cloud-arrow-up-fill"></i>
-                            <span>Upload a session recording</span>
+                            <span>Upload a session recording (Max 60s)</span>
                         </div>
 
                         <form id="audioUploadForm">
@@ -1037,7 +1050,7 @@
                                 <h5 class="fw-semibold mb-1" style="color: var(--text-primary);" id="dropzonePrimaryText">
                                     Tap or drop audio file here</h5>
                                 <p class="text-muted small mb-0" id="dropzoneSubText"
-                                    style="color: var(--text-muted) !important;">WAV, MP3, M4A, WebM, OGG &middot; up to 50MB
+                                    style="color: var(--text-muted) !important;">WAV, MP3, M4A, WebM, OGG &middot; up to 60s
                                 </p>
                                 <div id="selectedFileInfo" class="mt-2 hidden">
                                     <span
@@ -1062,7 +1075,7 @@
                     <div class="panel input-card h-100">
                         <div class="section-title">
                             <i class="bi bi-mic-fill"></i>
-                            <span>Record live session</span>
+                            <span>Record live session (Max 60s)</span>
                         </div>
 
                         <div class="recorder-container h-100 justify-content-between">
@@ -1081,7 +1094,10 @@
                                 <div class="wave-bar"></div>
                             </div>
 
-                            <div class="timer-display mb-3" id="timerDisplay">00:00</div>
+                            <div class="timer-display mb-3" id="timerDisplay">
+                                <span id="timeCount">00:00</span>
+                                <span class="text-muted" style="font-size: 0.82rem; font-weight: 400;"> / 01:00 max</span>
+                            </div>
 
                             <div class="recorder-actions">
                                 <button type="button" id="startRecBtn" class="btn-custom-primary w-100 w-sm-auto px-4">
@@ -1294,6 +1310,7 @@
         let animFrameId = null;
         let currentDocxUrl = null;
         let rawTherapyNotes = null;
+        let selectedAudioDuration = 0;
 
         // UI Toast helper
         function showToast(message, icon = 'bi-check-circle-fill') {
@@ -1306,7 +1323,7 @@
                 toast.style.opacity = '0';
                 toast.style.transition = 'opacity 0.3s ease';
                 setTimeout(() => toast.remove(), 300);
-            }, 3200);
+            }, 3500);
         }
 
         // Error display
@@ -1317,6 +1334,22 @@
                 errDiv.classList.remove('hidden');
             } else {
                 errDiv.classList.add('hidden');
+            }
+        }
+
+        // Quota update helper
+        async function fetchQuotaStatus() {
+            try {
+                const res = await fetch('/api/quota_status');
+                if (res.ok) {
+                    const data = await res.json();
+                    const el = document.getElementById('creditsCount');
+                    if (el) {
+                        el.textContent = `${data.uploads_remaining}/${data.max_uploads}`;
+                    }
+                }
+            } catch (e) {
+                console.debug('Quota check notice:', e);
             }
         }
 
@@ -1358,9 +1391,14 @@
         }
 
         // Display results
-        function renderResults(notes, docxUrl) {
+        function renderResults(notes, docxUrl, remaining) {
             currentDocxUrl = docxUrl;
             rawTherapyNotes = notes;
+
+            if (remaining !== undefined) {
+                const el = document.getElementById('creditsCount');
+                if (el) el.textContent = `${remaining}/2`;
+            }
 
             const mapping = {
                 'card_session_overview': notes.session_overview,
@@ -1451,7 +1489,7 @@
                     throw new Error('Invalid notes structure received.');
                 }
 
-                renderResults(data.validated_therapy_notes, data.docx_url);
+                renderResults(data.validated_therapy_notes, data.docx_url, data.uploads_remaining);
                 showToast('Clinical notes generated successfully!');
             } catch (err) {
                 console.error(err);
@@ -1463,6 +1501,26 @@
 
         // DOM Ready Initializations
         document.addEventListener('DOMContentLoaded', () => {
+            fetchQuotaStatus();
+
+            // Try Demo Session Button Logic
+            const tryDemoBtn = document.getElementById('tryDemoBtn');
+            tryDemoBtn.addEventListener('click', async () => {
+                startProcessingUI();
+                try {
+                    const response = await fetch('/process_demo', { method: 'POST' });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Demo processing failed.');
+                    renderResults(data.validated_therapy_notes, data.docx_url, data.uploads_remaining);
+                    showToast('Demo clinical notes loaded successfully!', 'bi-stars');
+                } catch (err) {
+                    console.error(err);
+                    document.getElementById('processingSection').classList.add('hidden');
+                    document.getElementById('inputSection').classList.remove('hidden');
+                    showError(err.message || 'Error processing demo audio.');
+                }
+            });
+
             // Mode Switcher (Upload vs Record Tabs)
             const tabUploadBtn = document.getElementById('tabUploadBtn');
             const tabRecordBtn = document.getElementById('tabRecordBtn');
@@ -1480,7 +1538,6 @@
                         recordPanel.classList.remove('d-none');
                     }
                 } else {
-                    // On large desktop displays, show both side-by-side
                     uploadPanel.classList.remove('d-none');
                     recordPanel.classList.remove('d-none');
                 }
@@ -1554,12 +1611,26 @@
                     dropzoneSubText.classList.add('hidden');
                     dropzoneIcon.className = 'bi bi-file-earmark-check-fill dropzone-icon text-emerald';
                     submitUploadBtn.disabled = false;
+
+                    // Inspect duration
+                    try {
+                        const tempAudio = new Audio(URL.createObjectURL(file));
+                        tempAudio.addEventListener('loadedmetadata', () => {
+                            selectedAudioDuration = tempAudio.duration || 0;
+                            if (selectedAudioDuration > 60) {
+                                showToast(`Note: Audio is ${Math.round(selectedAudioDuration)}s. Public demo enforces max 60s.`, 'bi-exclamation-circle-fill');
+                            }
+                        });
+                    } catch (e) {
+                        selectedAudioDuration = 0;
+                    }
                 }
             }
 
             clearFileBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 audioFileInput.value = '';
+                selectedAudioDuration = 0;
                 selectedFileInfo.classList.add('hidden');
                 dropzonePrimaryText.classList.remove('hidden');
                 dropzoneSubText.classList.remove('hidden');
@@ -1574,22 +1645,24 @@
 
                 const formData = new FormData();
                 formData.append('audio', file);
+                if (selectedAudioDuration > 0) {
+                    formData.append('duration', selectedAudioDuration);
+                }
                 submitAudioPayload(formData);
             });
 
-            // Live Voice Recorder Logic (Optimized for iOS Safari, Android Chrome & Desktop)
+            // Live Voice Recorder Logic (60s max auto-stop)
             const startRecBtn = document.getElementById('startRecBtn');
             const stopRecBtn = document.getElementById('stopRecBtn');
             const cancelRecBtn = document.getElementById('cancelRecBtn');
             const micPulseRing = document.getElementById('micPulseRing');
-            const timerDisplay = document.getElementById('timerDisplay');
+            const timeCount = document.getElementById('timeCount');
             const waveBars = document.querySelectorAll('.wave-bar');
             let mediaStream = null;
 
             startRecBtn.addEventListener('click', async () => {
                 showError(null);
                 try {
-                    // Unlock AudioContext on user gesture for mobile browsers
                     const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
                     if (AudioCtxClass) {
                         if (!audioContext) audioContext = new AudioCtxClass();
@@ -1606,12 +1679,11 @@
                         }
                     });
 
-                    // Determine best supported MIME type across iOS Safari / Android Chrome / Desktop
                     let mimeType = 'audio/webm';
                     if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
                         mimeType = 'audio/webm;codecs=opus';
                     } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                        mimeType = 'audio/mp4'; // iOS Safari fallback
+                        mimeType = 'audio/mp4';
                     } else if (MediaRecorder.isTypeSupported('audio/aac')) {
                         mimeType = 'audio/aac';
                     } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
@@ -1621,7 +1693,6 @@
                     mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
                     audioChunks = [];
 
-                    // Setup Web Audio Analyser for Real-time Wave Visualizer
                     try {
                         const source = audioContext.createMediaStreamSource(mediaStream);
                         analyser = audioContext.createAnalyser();
@@ -1642,7 +1713,7 @@
                         }
                         updateWaveVisualizer();
                     } catch (e) {
-                        console.warn('Web Audio visualizer setup notice:', e);
+                        console.warn('Web Audio visualizer notice:', e);
                     }
 
                     mediaRecorder.ondataavailable = (event) => {
@@ -1670,6 +1741,7 @@
                         const audioBlob = new Blob(recordedChunks, { type: finalMime });
                         const formData = new FormData();
                         formData.append('audio', audioBlob, `live_recording.${ext}`);
+                        formData.append('duration', duration);
                         submitAudioPayload(formData);
                     };
 
@@ -1682,12 +1754,18 @@
                     cancelRecBtn.classList.remove('hidden');
 
                     recSeconds = 0;
-                    timerDisplay.textContent = '00:00';
+                    timeCount.textContent = '00:00';
                     recInterval = setInterval(() => {
                         recSeconds++;
                         const mins = String(Math.floor(recSeconds / 60)).padStart(2, '0');
                         const secs = String(recSeconds % 60).padStart(2, '0');
-                        timerDisplay.textContent = `${mins}:${secs}`;
+                        timeCount.textContent = `${mins}:${secs}`;
+
+                        // Auto-stop at 60 seconds max
+                        if (recSeconds >= 60) {
+                            showToast('60-second demo limit reached. Auto-processing recording...', 'bi-stopwatch-fill');
+                            stopRecBtn.click();
+                        }
                     }, 1000);
 
                 } catch (err) {
@@ -1729,7 +1807,7 @@
                 startRecBtn.classList.remove('hidden');
                 stopRecBtn.classList.add('hidden');
                 cancelRecBtn.classList.add('hidden');
-                timerDisplay.textContent = '00:00';
+                timeCount.textContent = '00:00';
                 waveBars.forEach(bar => bar.style.height = '8px');
             }
 
@@ -1760,11 +1838,13 @@
                 document.getElementById('resultsSection').classList.add('hidden');
                 document.getElementById('inputSection').classList.remove('hidden');
                 audioFileInput.value = '';
+                selectedAudioDuration = 0;
                 selectedFileInfo.classList.add('hidden');
                 dropzonePrimaryText.classList.remove('hidden');
                 dropzoneSubText.classList.remove('hidden');
                 dropzoneIcon.className = 'bi bi-file-earmark-music dropzone-icon';
                 submitUploadBtn.disabled = true;
+                fetchQuotaStatus();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
         });

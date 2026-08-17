@@ -5,6 +5,7 @@ Configures Flask application instance, registers API blueprints,
 and defines client-facing routes.
 """
 
+import os
 from flask import Flask, render_template
 from routes import api_bp
 from config.config import UPLOAD_FOLDER, MAX_CONTENT_LENGTH, logger
@@ -19,6 +20,7 @@ def create_app() -> Flask:
         Flask: Configured Flask application instance.
     """
     app = Flask(__name__)
+    app.secret_key = os.getenv("SECRET_KEY", "therapy-notes-session-key-v3")
     app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 3600
     app.config["UPLOAD_FOLDER"] = str(UPLOAD_FOLDER)
     app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH

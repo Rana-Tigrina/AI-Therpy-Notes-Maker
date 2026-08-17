@@ -63,6 +63,11 @@ FALLBACK_MODEL = os.getenv("FALLBACK_MODEL", "gemini-2.5-flash")
 ASR_BACKEND = os.getenv("ASR_BACKEND", "auto").lower()  # 'auto', 'crisper_whisper', or 'gemini'
 CRISPER_WHISPER_MODEL = os.getenv("CRISPER_WHISPER_MODEL", "small")
 
+# Demo & Public Rate Limits Configuration
+ENABLE_DEMO_LIMITS = os.getenv("ENABLE_DEMO_LIMITS", "true").lower() in ("true", "1", "yes")
+MAX_AUDIO_DURATION_SEC = int(os.getenv("MAX_AUDIO_DURATION_SEC", 60))
+MAX_USER_UPLOADS = int(os.getenv("MAX_USER_UPLOADS", 2))
+
 # Logging Configuration
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_FILE = os.getenv("LOG_FILE", "app.log" if not IS_SERVERLESS else "")
